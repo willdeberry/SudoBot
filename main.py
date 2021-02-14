@@ -17,27 +17,23 @@ public_key = os.environ.get('PUBLIC_KEY')
 DiscordCommands().register_commands()
 
 
-@app.route('/', methods = ['POST', 'GET'])
+@app.route('/', methods = ['POST'])
 @verify_key_decorator(public_key)
 def main():
-    if request.method == 'GET':
-        return 'Hello'
-
-    if request.method == 'POST':
-        print(request.json)
-        response = CommandResponse(request.json)
-        if request.json["type"] == 1:
-            return jsonify({"type": 1})
-        else:
-            return jsonify({
-                "type": 3,
-                "data": {
-                    "tts": False,
-                    "content": response.parse_response(),
-                    "embeds": [],
-                    "allowed_mentions": []
-                }
-            })
+    print(request.json)
+    response = CommandResponse(request.json)
+    if request.json["type"] == 1:
+        return jsonify({"type": 1})
+    else:
+        return jsonify({
+            "type": 3,
+            "data": {
+                "tts": False,
+                "content": response.parse_response(),
+                "embeds": [],
+                "allowed_mentions": []
+            }
+        })
 
 
 if __name__ == '__main__':
