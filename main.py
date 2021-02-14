@@ -5,12 +5,14 @@ import os
 from dotenv import load_dotenv
 
 from commands import DiscordCommands
+from management import Bot
 from responses import CommandResponse
 
 
 load_dotenv()
 app = Flask(__name__)
 public_key = os.environ.get('PUBLIC_KEY')
+bot = Bot()
 
 
 DiscordCommands().register_commands()
