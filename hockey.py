@@ -6,7 +6,7 @@ class Hockey:
     def tbl_next_game(self):
         data = requests.get('https://statsapi.web.nhl.com/api/v1/teams/14?expand=team.schedule.next').json()
         next_game = data['teams'][0]['nextGameSchedule']['dates'][0]['date']
-        return f'**Next TBL game is** {next_game}'
+        return next_game
 
     def tbl_record(self):
         data = requests.get('https://statsapi.web.nhl.com/api/v1/teams/14?expand=team.stats').json()
@@ -17,5 +17,11 @@ class Hockey:
         ot = stats['ot']
         points = stats['pts']
 
-        return f'**TBL Games played**: {games_played} **Standings**: {wins}-{losses}-{ot} **Points**: {points}'
+        return {
+            "games_played": games_played,
+            "wins": wins,
+            "losses": losses,
+            "ot": ot,
+            "points": points
+        }
 
