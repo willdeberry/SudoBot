@@ -1,0 +1,5 @@
+discord
+discord-interactions
+flask
+python-dotenv
+requests
