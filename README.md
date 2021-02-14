@@ -1,8 +1,6 @@
 # SudoBot
-----
 
 ## Installation
-----
 
 ### OS Prerequisites
 
