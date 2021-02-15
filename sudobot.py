@@ -4,11 +4,11 @@ import discord
 from dotenv import load_dotenv
 import os
 
-from message_handler import MessageHandler
+from message_handler import DiscordCommands
 
 
 client = discord.Client()
-handler = MessageHandler()
+discord_commands = DiscordCommands()
 
 
 @client.event
@@ -26,12 +26,12 @@ async def on_message(message):
         subcommand = message.content.split(' ')[1]
 
         if subcommand == 'list':
-            await message.channel.send(handler.list_commands())
+            await message.channel.send(discord_commands.list_commands())
 
         if subcommand == 'remove':
             try:
                 command_id = message.content.split(' ')[2]
-                response = handler.remove_command(command_id)
+                response = discord_commands.remove_command(command_id)
             except IndexError:
                 response = 'Please provide id of the command to remove'
 
@@ -46,6 +46,7 @@ async def on_message(message):
 def main():
     load_dotenv()
     token = os.environ.get('BOT_TOKEN')
+    discord_commands.register_commands()
     client.run(token)
 
 

@@ -4,7 +4,7 @@ import os
 import requests
 
 
-class MessageHandler:
+class DiscordCommands:
     load_dotenv()
     domain = 'https://discord.com/api/v8/applications'
     application_id = os.environ.get('APPLICATION_ID')
@@ -26,3 +26,42 @@ class MessageHandler:
         url = f'{self.url}/{id}'
         requests.delete(url, headers = self.headers)
         return f'Removed command {id}'
+
+    def register_commands(self):
+        commands = [
+            {
+                "name": "fyc",
+                "description": "Fuck your couch",
+                "type": 1
+            },
+            {
+                "name": "tbl",
+                "description": "TBL Information",
+                "options": [
+                    {
+                        "name": "next",
+                        "description": "When is the next game",
+                        "type": 1
+                    },
+                    {
+                        "name": "record",
+                        "description": "What is the TBL's current record",
+                        "type": 1
+                    }
+                ]
+            },
+            {
+                "name": "stocks",
+                "description": "Stock information",
+                "options": [
+                    {
+                        "name": "price",
+                        "description": "Price of the stock",
+                        "type": 3
+                    }
+                ]
+            }
+        ]
+
+        for command in commands:
+            requests.post(self.url, headers = self.headers, json = command)
