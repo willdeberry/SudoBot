@@ -4,6 +4,7 @@ import discord
 from dotenv import load_dotenv
 import os
 
+from logger import logger
 from message_handler import DiscordCommands
 
 
@@ -13,12 +14,12 @@ discord_commands = DiscordCommands()
 
 @client.event
 async def on_ready():
-    print(f'Bot logged in as {client.user}')
+    logger.info(f'Bot logged in as {client.user}')
 
 
 @client.event
 async def on_message(message):
-    print(message.content)
+    logger.info(f'Received message: {message.content}')
     if message.author == client.user:
         return
 
@@ -39,15 +40,18 @@ async def on_message(message):
 
     if 'weed' in message.content:
         weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
-        print(weed_emoji)
         await message.add_reaction(weed_emoji)
 
 
-def main():
+def start_bot():
+    logger.info('Logging in with bot')
     load_dotenv()
     token = os.environ.get('BOT_TOKEN')
-    discord_commands.register_commands()
     client.run(token)
+
+def main():
+    discord_commands.register_commands()
+    start_bot()
 
 
 if __name__ == '__main__':

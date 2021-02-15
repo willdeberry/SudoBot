@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 import os
 import requests
 
+from logger import logger
+
 
 class DiscordCommands:
     load_dotenv()
@@ -28,6 +30,7 @@ class DiscordCommands:
         return f'Removed command {id}'
 
     def register_commands(self):
+        logger.info('Register commands')
         commands = [
             {
                 "name": "fyc",
@@ -64,4 +67,5 @@ class DiscordCommands:
         ]
 
         for command in commands:
+            logger.info('Registering command {}', command)
             requests.post(self.url, headers = self.headers, json = command)
