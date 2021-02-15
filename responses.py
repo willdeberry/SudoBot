@@ -1,31 +1,18 @@
 
 import requests
 
-from commands import DiscordCommands
 from hockey import Hockey
+from stocks import Stocks
 
 
 class CommandResponse:
-    commands = DiscordCommands()
     hockey = Hockey()
+    stocks = Stocks()
 
     def __init__(self, response):
         self.command_payload = response['data']
         self.command_name = self.command_payload['name']
         self.options = self.command_payload.get('options', None)
-
-    def list_commands(self):
-        return self.commands.list_commands()
-
-    def remove_command(self, options):
-        command_options = options[0].get('options', None)
-
-        if not command_options:
-            return 'Please provide a valid Id to remove.'
-
-        command_to_remove = command_options[0]['value']
-        self.commands.remove_command(command_to_remove)
-        return f'Removed command {command_to_remove}'
 
     def parse_response(self):
         if self.command_name == 'fyc':
@@ -45,3 +32,8 @@ class CommandResponse:
 
             if self.options[0]['name'] == 'record':
                 return self.hockey.tbl_record()
+
+        if self.command_name == 'stocks':
+            if self.options[0]['name'] == 'price':
+                ticker = self.options[0]['value']
+                return self.stocks.get_price(ticker)

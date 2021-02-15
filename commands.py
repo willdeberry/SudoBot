@@ -23,7 +23,7 @@ class DiscordCommands:
             },
             {
                 "name": "tbl",
-                "description": "What's the next TBL game",
+                "description": "TBL Information",
                 "options": [
                     {
                         "name": "next",
@@ -34,6 +34,17 @@ class DiscordCommands:
                         "name": "record",
                         "description": "What is the TBL's current record",
                         "type": 1
+                    }
+                ]
+            },
+            {
+                "name": "stocks",
+                "description": "Stock information",
+                "options": [
+                    {
+                        "name": "price",
+                        "description": "Price of the stock",
+                        "type": 3
                     }
                 ]
             }
