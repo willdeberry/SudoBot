@@ -55,12 +55,8 @@ class Hockey:
                         "type": "rich",
                         "fields": [
                             {
-                                "name": "Games Played / Points",
-                                "value": f'{games_played} / {points}'
-                            },
-                            {
-                                "name": "Record",
-                                "value": f'{wins}-{losses}-{ot}'
+                                "name": "GP | W-L-O | PTS",
+                                "value": f'{games_played} | {wins}-{losses}-{ot} | {points}'
                             }
                         ]
                     }
