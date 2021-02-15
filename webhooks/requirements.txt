@@ -1,5 +1,7 @@
 discord
 discord-interactions
 flask
+python-dateutil
 python-dotenv
+pytz
 requests

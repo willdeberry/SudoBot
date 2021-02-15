@@ -1,4 +1,6 @@
 
+import dateutil.parser
+import pytz
 import requests
 
 
@@ -6,7 +8,12 @@ class Hockey:
 
     def tbl_next_game(self):
         data = requests.get('https://statsapi.web.nhl.com/api/v1/teams/14?expand=team.schedule.next').json()
-        next_game = data['teams'][0]['nextGameSchedule']['dates'][0]['date']
+        next_game = data['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]
+        next_game_date = next_game['gameDate']
+        game_time_utc = dateutil.parser.parse(next_game_date)
+        game_time_est = game_time_utc.astimezone(pytz.timezone('America/New_York'))
+        venue = next_game['venue']['name']
+
         return {
             "type": 3,
             "data": {
@@ -19,7 +26,7 @@ class Hockey:
                         "fields": [
                             {
                                 "name": "Date",
-                                "value": next_game
+                                "value": f"{game_time_est.strftime('%D %H:%M')} @ {venue}"
                             }
                         ]
                     }
@@ -48,24 +55,12 @@ class Hockey:
                         "type": "rich",
                         "fields": [
                             {
-                                "name": "Games Played",
-                                "value": games_played
+                                "name": "Games Played / Points",
+                                "value": f'{games_played} / {points}'
                             },
                             {
-                                "name": "Wins",
-                                "value": wins
-                            },
-                            {
-                                "name": "Losses",
-                                "value": losses
-                            },
-                            {
-                                "name": "OT",
-                                "value": ot
-                            },
-                            {
-                                "name": "Points",
-                                "value": points
+                                "name": "Record",
+                                "value": f'{wins}-{losses}-{ot}'
                             }
                         ]
                     }
