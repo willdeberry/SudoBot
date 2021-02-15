@@ -1,3 +1,4 @@
+
 import requests
 
 from commands import DiscordCommands
@@ -40,62 +41,7 @@ class CommandResponse:
 
         if self.command_name == 'tbl':
             if self.options[0]['name'] == 'next':
-                return {
-                    "type": 3,
-                    "data": {
-                        "tts": False,
-                        "content": "",
-                        "embeds": [
-                            {
-                                "title": "Next TBL Game",
-                                "type": "rich",
-                                "fields": [
-                                    {
-                                        "name": "Date",
-                                        "value": self.hockey.tbl_next_game()
-                                    }
-                                ]
-                            }
-                        ],
-                        "allowed_mentions": []
-                    }
-                }
+                return self.hockey.tbl_next_game()
 
             if self.options[0]['name'] == 'record':
-                data = self.hockey.tbl_record()
-                return {
-                    "type": 3,
-                    "data": {
-                        "tts": False,
-                        "content": "",
-                        "embeds": [
-                            {
-                                "title": "TBL Current Record",
-                                "type": "rich",
-                                "fields": [
-                                    {
-                                        "name": "Games Played",
-                                        "value": data['games_played']
-                                    },
-                                    {
-                                        "name": "Wins",
-                                        "value": data['wins']
-                                    },
-                                    {
-                                        "name": "Losses",
-                                        "value": data['losses']
-                                    },
-                                    {
-                                        "name": "OT",
-                                        "value": data['ot']
-                                    },
-                                    {
-                                        "name": "Points",
-                                        "value": data['points']
-                                    }
-                                ]
-                            }
-                        ],
-                        "allowed_mentions": []
-                    }
-                }
+                return self.hockey.tbl_record()
