@@ -17,10 +17,6 @@ discord_commands = DiscordCommands()
 hockey_game = HockeyGame()
 status = Status(os.environ.get('UPTIME_ROBOT_API_KEY'))
 
-token = os.environ.get('BOT_TOKEN')
-sports_channel_id = os.environ.get('SPORTS_CHANNEL')
-guild_id = os.environ.get('GUILD_ID')
-
 
 @client.event
 async def on_ready():
@@ -64,7 +60,10 @@ async def on_message(message):
         await message.add_reaction(weed_emoji)
 
 
-def find_emoji(emojis, name):
+def find_emoji_in_guild(name):
+    guild = client.get_guild(int(os.environ.get('GUILD_ID')))
+    emojis = guild.emojis
+
     for emoji in emojis:
         if emoji.name == name.lower():
             return emoji
@@ -79,19 +78,12 @@ def build_embed(title, fields):
     return embed
 
 
-async def report_score(score):
-    home_name = score['home']['name']
-    home_score = score['home']['score']
-    away_name = score['away']['name']
-    away_score = score['away']['score']
-    _sports_channel = client.fetch_channel(sports_channel_id)
+async def report_score():
+    _sports_channel = client.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
     sports_channel = await _sports_channel
-    guild = client.get_guild(int(guild_id))
-    emojis = guild.emojis
-    goal_emoji = find_emoji(emojis, 'goal')
-    home_team_emoji = find_emoji(emojis, home_name)
-    away_team_emoji = find_emoji(emojis, away_name)
-    fields = [{'name': f'{name}  {name}  {name}', 'value': f'{home_score} - {away_score}'}]
+    goal_emoji = find_emoji_in_guild('goal')
+
+    fields = [{'name': f'{goal_emoji}  {goal_emoji}  {goal_emoji}', 'value': hockey_game.format_score()}]
     embed = build_embed('Goal Scored', fields)
 
     await sports_channel.send(embed = embed)
@@ -99,15 +91,15 @@ async def report_score(score):
 
 @tasks.loop(seconds = 5)
 async def check_score():
-    score = hockey_game.did_score()
+    goal = hockey_game.did_score()
 
-    if score['update']:
-        await report_score(score)
+    if goal:
+        await report_score()
 
 
 def start_bot():
     logger.info('Logging in with bot')
-    client.run(token)
+    client.run(os.environ.get('BOT_TOKEN'))
 
 
 def main():
