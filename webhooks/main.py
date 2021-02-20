@@ -13,6 +13,11 @@ app = Flask(__name__)
 public_key = os.environ.get('PUBLIC_KEY')
 
 
+@app.route('/status', methods = ['GET'])
+def status():
+    return 'Alive'
+
+
 @app.route('/', methods = ['POST'])
 @verify_key_decorator(public_key)
 def main():
