@@ -41,6 +41,10 @@ async def on_message(message):
             await message.channel.send(discord_commands.list_commands())
 
         if subcommand == 'remove':
+            if message.author.name != 'Will':
+                await message.channel.send('You are not authorized to run this command')
+                return
+
             try:
                 command_id = message.content.split(' ')[2]
                 response = discord_commands.remove_command(command_id)
