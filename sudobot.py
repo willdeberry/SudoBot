@@ -8,12 +8,14 @@ import os
 from game_watcher import HockeyGame
 from logger import logger
 from message_handler import DiscordCommands
+from status import Status
 
 
 load_dotenv()
 client = discord.Client()
 discord_commands = DiscordCommands()
 hockey_game = HockeyGame()
+status = Status(os.environ.get('UPTIME_ROBOT_API_KEY'))
 
 token = os.environ.get('BOT_TOKEN')
 sports_channel_id = os.environ.get('SPORTS_CHANNEL')
@@ -47,6 +49,12 @@ async def on_message(message):
 
             await message.channel.send(response)
 
+        if subcommand == 'status':
+            current_status = status.get_current()
+            embed = build_embed('Current server statuses', current_status)
+            await message.channel.send(embed = embed)
+
+
     if 'weed' in message.content:
         weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
         await message.add_reaction(weed_emoji)
@@ -58,11 +66,12 @@ def find_emoji(emojis, name):
             return emoji
 
 
-def build_embed(name, home_score, away_score):
-    embed = discord.Embed(title = f'Goal Scored', type = 'rich')
-    embed_field_name = f'{name}  {name}  {name}'
-    embed_field_value = f'{home_score} - {away_score}'
-    embed.add_field(name = embed_field_name, value = embed_field_value)
+def build_embed(title, fields):
+    embed = discord.Embed(title = title, type = 'rich')
+
+    for field in fields:
+        embed.add_field(name = field['name'], value = field['value'])
+
     return embed
 
 
@@ -78,7 +87,8 @@ async def report_score(score):
     goal_emoji = find_emoji(emojis, 'goal')
     home_team_emoji = find_emoji(emojis, home_name)
     away_team_emoji = find_emoji(emojis, away_name)
-    embed = build_embed(goal_emoji, home_score, away_score)
+    fields = [{'name': f'{name}  {name}  {name}', 'value': f'{home_score} - {away_score}'}]
+    embed = build_embed('Goal Scored', fields)
 
     await sports_channel.send(embed = embed)
 
