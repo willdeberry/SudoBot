@@ -35,7 +35,11 @@ class Hockey:
                         "fields": [
                             {
                                 "name": "Date",
-                                "value": f"{game_time_est.strftime('%D %H:%M')} vs {versus} @ {venue}"
+                                "value": f"{game_time_est.strftime('%D %H:%M')} vs {versus}"
+                            },
+                            {
+                                "name": "Venue",
+                                "value": f"{venue}"
                             }
                         ]
                     }
