@@ -28,7 +28,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    logger.info(f'Received message: {message.content}')
+    logger.info(f'Received message in {message.channel.name}: {message.content}')
     if message.author == client.user:
         return
 
