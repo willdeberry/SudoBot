@@ -32,7 +32,7 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    if message.content.startswith('$commands'):
+    if message.content.startswith('$sudo'):
         subcommand = message.content.split(' ')[1]
 
         if subcommand == 'list':
