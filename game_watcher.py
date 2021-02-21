@@ -37,7 +37,7 @@ class HockeyGame:
 
         game_status = game['status']['detailedState']
 
-        if game_status != 'In Progress':
+        if 'In Progress' not in game_status:
             logger.warning('Game not currently in progress')
             self.reset_score()
             return self.update
@@ -66,9 +66,9 @@ class HockeyGame:
 
     def get_team_name(self, data):
         api = data['team']['link']
-        url = f'{base_url}/{api}'
+        url = f'{self.base_url}/{api}'
         team_data = requests.get(url).json()
-        return team_data[0]['abbreviation']
+        return team_data['teams'][0]['abbreviation']
 
     def format_score(self):
         home = self.score['home']
