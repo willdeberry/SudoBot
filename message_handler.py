@@ -8,15 +8,15 @@ from logger import logger
 
 class DiscordCommands:
     load_dotenv()
-    domain = 'https://discord.com/api/v8/applications'
-    application_id = os.environ.get('APPLICATION_ID')
-    guild_id = os.environ.get('GUILD_ID')
-    token = os.environ.get('BOT_TOKEN')
-    headers = {'Authorization': f'Bot {token}'}
-    url = f'{domain}/{application_id}/guilds/{guild_id}/commands'
+    _domain = 'https://discord.com/api/v8/applications'
+    _application_id = os.environ.get('APPLICATION_ID')
+    _guild_id = os.environ.get('GUILD_ID')
+    _token = os.environ.get('BOT_TOKEN')
+    _headers = {'Authorization': f'Bot {_token}'}
+    _url = f'{_domain}/{_application_id}/guilds/{_guild_id}/commands'
 
     def list_commands(self):
-        commands = requests.get(self.url, headers = self.headers).json()
+        commands = requests.get(self._url, headers = self._headers).json()
         data = []
 
         for command in commands:
@@ -25,8 +25,8 @@ class DiscordCommands:
         return data
 
     def remove_command(self, id):
-        url = f'{self.url}/{id}'
-        requests.delete(url, headers = self.headers)
+        url = f'{self._url}/{id}'
+        requests.delete(url, headers = self._headers)
         return f'Removed command {id}'
 
     def register_commands(self):
@@ -73,4 +73,4 @@ class DiscordCommands:
 
         for command in commands:
             logger.info('Registering command {}', command)
-            requests.post(self.url, headers = self.headers, json = command)
+            requests.post(self._url, headers = self._headers, json = command)
