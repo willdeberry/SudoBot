@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import asyncio
 import discord
 from discord.ext import tasks
 from dotenv import load_dotenv
@@ -12,109 +13,110 @@ from status import Status
 
 
 load_dotenv()
-client = discord.Client()
-discord_commands = DiscordCommands()
-hockey_game = HockeyGame()
-status = Status(os.environ.get('UPTIME_ROBOT_API_KEY'))
 
 
-@client.event
-async def on_ready():
-    logger.info(f'Bot logged in as {client.user}')
-    check_score.start()
+class SudoBot(discord.Client):
+    discord_commands = DiscordCommands()
+    hockey_game = HockeyGame()
+    status = Status(os.environ.get('UPTIME_ROBOT_API_KEY'))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.discord_commands.register_commands()
+
+        self.bg_task = self.loop.create_task(self.check_score())
+
+    async def on_ready(self):
+        logger.info(f'Bot logged in as {self.user}')
+
+    async def on_message(self, message):
+        logger.info(f'Received message in {message.channel.name}: {message.content}')
+        if message.author == self.user:
+            return
+
+        if message.content.startswith('$udo'):
+            subcommand = message.content.split(' ')[1]
+
+            if subcommand == 'list':
+                slash_commands = self.discord_commands.list_commands()
+                slash_command_embed = self._build_embed('Slash Commands', slash_commands, inline = False)
+                await message.channel.send(embed = slash_command_embed)
+
+                commands = [
+                    {'name': 'list', 'value': 'Shows a list of commands available'},
+                    {'name': 'remove', 'value': 'Remove a slash command'},
+                    {'name': 'status', 'value': 'Current health of the servers and bot'}
+                ]
+                command_embed = self._build_embed('$udo Commands', commands, inline = False)
+                await message.channel.send(embed = command_embed)
+
+            if subcommand == 'remove':
+                if message.author.name != 'Will':
+                    await message.channel.send('You are not authorized to run this command')
+                    return
+
+                try:
+                    command_id = message.content.split(' ')[2]
+                    response = self.discord_commands.remove_command(command_id)
+                except IndexError:
+                    response = 'Please provide id of the command to remove'
+
+                await message.channel.send(response)
+
+            if subcommand == 'status':
+                current_status = self.status.get_current()
+                embed = self._build_embed('Current server statuses', current_status)
+                await message.channel.send(embed = embed)
 
 
-@client.event
-async def on_message(message):
-    logger.info(f'Received message in {message.channel.name}: {message.content}')
-    if message.author == client.user:
-        return
+        if 'weed' in message.content:
+            weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
+            await message.add_reaction(weed_emoji)
 
-    if message.content.startswith('$udo'):
-        subcommand = message.content.split(' ')[1]
+    def _find_emoji_in_guild(self, name):
+        guild = self.get_guild(int(os.environ.get('GUILD_ID')))
+        emojis = guild.emojis
 
-        if subcommand == 'list':
-            slash_commands = discord_commands.list_commands()
-            slash_command_embed = build_embed('Slash Commands', slash_commands, inline = False)
-            await message.channel.send(embed = slash_command_embed)
+        for emoji in emojis:
+            if emoji.name == name.lower():
+                return emoji
 
-            commands = [
-                {'name': 'list', 'value': 'Shows a list of commands available'},
-                {'name': 'remove', 'value': 'Remove a slash command'},
-                {'name': 'status', 'value': 'Current health of the servers and bot'}
-            ]
-            command_embed = build_embed('$udo Commands', commands, inline = False)
-            await message.channel.send(embed = command_embed)
+    def _build_embed(self, title, fields, inline = True):
+        embed = discord.Embed(title = title, type = 'rich')
 
-        if subcommand == 'remove':
-            if message.author.name != 'Will':
-                await message.channel.send('You are not authorized to run this command')
-                return
+        for field in fields:
+            embed.add_field(name = field['name'], value = field['value'], inline = inline)
 
-            try:
-                command_id = message.content.split(' ')[2]
-                response = discord_commands.remove_command(command_id)
-            except IndexError:
-                response = 'Please provide id of the command to remove'
-
-            await message.channel.send(response)
-
-        if subcommand == 'status':
-            current_status = status.get_current()
-            embed = build_embed('Current server statuses', current_status)
-            await message.channel.send(embed = embed)
+        return embed
 
 
-    if 'weed' in message.content:
-        weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
-        await message.add_reaction(weed_emoji)
+    async def _report_score(self):
+        _sports_channel = self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
+        sports_channel = await _sports_channel
+        goal_emoji = self._find_emoji_in_guild('goal')
+
+        fields = [{'name': f'{goal_emoji}  {goal_emoji}  {goal_emoji}', 'value': self.hockey_game.format_score()}]
+        embed = self._build_embed('Goal Scored', fields, inline = False)
+
+        await sports_channel.send(embed = embed)
 
 
-def find_emoji_in_guild(name):
-    guild = client.get_guild(int(os.environ.get('GUILD_ID')))
-    emojis = guild.emojis
+    async def check_score(self):
+        await self.wait_until_ready()
+        logger.info('checking score')
 
-    for emoji in emojis:
-        if emoji.name == name.lower():
-            return emoji
+        while not self.is_closed():
+            goal = self.hockey_game.did_score()
 
+            if goal:
+                await self._report_score()
 
-def build_embed(title, fields, inline = True):
-    embed = discord.Embed(title = title, type = 'rich')
-
-    for field in fields:
-        embed.add_field(name = field['name'], value = field['value'], inline = inline)
-
-    return embed
-
-
-async def report_score():
-    _sports_channel = client.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
-    sports_channel = await _sports_channel
-    goal_emoji = find_emoji_in_guild('goal')
-
-    fields = [{'name': f'{goal_emoji}  {goal_emoji}  {goal_emoji}', 'value': hockey_game.format_score()}]
-    embed = build_embed('Goal Scored', fields, inline = False)
-
-    await sports_channel.send(embed = embed)
-
-
-@tasks.loop(seconds = 5)
-async def check_score():
-    goal = hockey_game.did_score()
-
-    if goal:
-        await report_score()
-
-
-def start_bot():
-    logger.info('Logging in with bot')
-    client.run(os.environ.get('BOT_TOKEN'))
+            await asyncio.sleep(5)
 
 
 def main():
-    discord_commands.register_commands()
-    start_bot()
+    client = SudoBot()
+    client.run(os.environ.get('BOT_TOKEN'))
 
 
 if __name__ == '__main__':
