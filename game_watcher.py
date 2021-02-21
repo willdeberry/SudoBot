@@ -45,14 +45,14 @@ class HockeyGame:
         home_team = game['teams']['home']
         away_team = game['teams']['away']
 
-        if not self.score['home']['score'] or not self.score['away']['score']:
+        if self.score['home']['score'] is None or self.score['away']['score'] is None:
             logger.warning('Scoreboard initialized')
             self.score['home']['score'] = home_team['score']
             self.score['away']['score'] = away_team['score']
             return self.update
 
 
-        if home_team['score'] != self.score['home']['score'] or away_team['score'] != self.away_team['score']:
+        if home_team['score'] != self.score['home']['score'] or away_team['score'] != self.score['away']['score']:
             logger.info('goal scored!!')
             self.score['home']['score'] = home_team['score']
             self.score['away']['score'] = away_team['score']
