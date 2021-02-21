@@ -33,6 +33,9 @@ class CommandResponse:
             if self.options[0]['name'] == 'record':
                 return self.hockey.tbl_record()
 
+            if self.options[0]['name'] == 'score':
+                return self.hockey.tbl_score()
+
         if self.command_name == 'stocks':
             if self.options[0]['name'] == 'price':
                 ticker = self.options[0]['value']

@@ -77,3 +77,74 @@ class Hockey:
                 "allowed_mentions": []
             }
         }
+
+    def tbl_score(self):
+        data = requests.get(f'{self.base_url}/api/v1/schedule?expand=schedule.linescore&teamId=14').json()
+
+        try:
+            game = data['dates'][0]['games'][0]
+        except IndexError:
+            return self.no_game()
+
+        game_status = game['status']['detailedState']
+
+        if 'In Progress' not in game_status:
+            return self.no_game()
+
+        home_team = game['teams']['home']
+        home_score = home_team['score']
+        home_name = self.get_team_name(home_team)
+        away_team = game['teams']['away']
+        away_score = away_team['score']
+        away_name = self.get_team_name(away_team)
+
+        return {
+            "type": 3,
+            "data": {
+                "tts": False,
+                "content": "",
+                "embeds": [
+                    {
+                        "title": "TBL game in progress",
+                        "type": "rich",
+                        "fields": [
+                            {
+                                "name": "Current Score",
+                                "value": f'{home_name} {home_score} - {away_score} {away_name}'
+                            }
+                        ]
+                    }
+                ],
+                "allowed_mentions": []
+            }
+        }
+
+
+    def no_game(self):
+        return {
+            "type": 3,
+            "data": {
+                "tts": False,
+                "content": "",
+                "embeds": [
+                    {
+                        "title": "TBL Score",
+                        "type": "rich",
+                        "fields": [
+                            {
+                                "name": "No game in progress",
+                                "value": 'N/A'
+                            }
+                        ]
+                    }
+                ],
+                "allowed_mentions": []
+            }
+        }
+
+    def get_team_name(self, data):
+        api = data['team']['link']
+        url = f'{self.base_url}/{api}'
+        team_data = requests.get(url).json()
+        return team_data['teams'][0]['abbreviation']
+
