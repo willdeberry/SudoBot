@@ -30,11 +30,21 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    if message.content.startswith('$sudo'):
+    if message.content.startswith('$udo'):
         subcommand = message.content.split(' ')[1]
 
         if subcommand == 'list':
-            await message.channel.send(discord_commands.list_commands())
+            slash_commands = discord_commands.list_commands()
+            slash_command_embed = build_embed('Slash Commands', slash_commands, inline = False)
+            await message.channel.send(embed = slash_command_embed)
+
+            commands = [
+                {'name': 'list', 'value': 'Shows a list of commands available'},
+                {'name': 'remove', 'value': 'Remove a slash command'},
+                {'name': 'status', 'value': 'Current health of the servers and bot'}
+            ]
+            command_embed = build_embed('$udo Commands', commands, inline = False)
+            await message.channel.send(embed = command_embed)
 
         if subcommand == 'remove':
             if message.author.name != 'Will':
@@ -69,11 +79,11 @@ def find_emoji_in_guild(name):
             return emoji
 
 
-def build_embed(title, fields):
+def build_embed(title, fields, inline = True):
     embed = discord.Embed(title = title, type = 'rich')
 
     for field in fields:
-        embed.add_field(name = field['name'], value = field['value'])
+        embed.add_field(name = field['name'], value = field['value'], inline = inline)
 
     return embed
 
@@ -84,7 +94,7 @@ async def report_score():
     goal_emoji = find_emoji_in_guild('goal')
 
     fields = [{'name': f'{goal_emoji}  {goal_emoji}  {goal_emoji}', 'value': hockey_game.format_score()}]
-    embed = build_embed('Goal Scored', fields)
+    embed = build_embed('Goal Scored', fields, inline = False)
 
     await sports_channel.send(embed = embed)
 

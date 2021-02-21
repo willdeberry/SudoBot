@@ -20,9 +20,9 @@ class DiscordCommands:
         data = []
 
         for command in commands:
-            data.append(f"{command['name']}: {command['id']}")
+            data.append({'name': command['name'], 'value': command['description']})
 
-        return '\n'.join(data)
+        return data
 
     def remove_command(self, id):
         url = f'{self.url}/{id}'
