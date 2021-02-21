@@ -24,7 +24,7 @@ Make sure you have the virtualenv package installed and create the directory tha
 Go ahead and move to the directory where everything was cloned into and proceed with virtualenv creation.
 
 ```
-cd SudoBot
+cd SudoBot/webhooks
 sudo apt install python3-venv
 mkdir venv
 python3 -m venv venv
@@ -34,7 +34,7 @@ Next, activate your new virtualenv and start installing packages.
 
 ```
 source venv/bin/activate
-python -m pip -r requirements.txt
+python -m pip install -r requirements.txt
 deactivate
 ```
 
