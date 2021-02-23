@@ -52,7 +52,7 @@ class HockeyGame:
 
             self.score['home']['name'] = self._get_team_name(home_team)
             self.score['away']['name'] = self._get_team_name(away_team)
-            return
+            return True
 
         logger.info(f"score {self.score['home']['score']} - {self.score['away']['score']}")
 
