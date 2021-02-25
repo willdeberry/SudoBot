@@ -28,6 +28,7 @@ class SudoBot(discord.Client):
 
     async def on_ready(self):
         logger.info(f'Bot logged in as {self.user}')
+        await self.change_presence(activity = discord.Activity(type = discord.ActivityType.watching, name = 'for $udo'))
 
     async def on_message(self, message):
         logger.info(f'Received message in {message.channel.name}: {message.content}')
