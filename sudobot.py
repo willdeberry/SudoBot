@@ -30,7 +30,7 @@ class SudoBot(discord.Client):
         logger.info(f'Bot logged in as {self.user}')
 
     async def on_message(self, message):
-        logger.info(f'Received message in {message.channel.name}: {message.author.name}: {message.content}')
+        logger.info(f'Received message in {message.channel.name}: {message.content}')
         if message.author == self.user:
             return
 
@@ -72,10 +72,6 @@ class SudoBot(discord.Client):
         if 'weed' in message.content:
             weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
             await message.add_reaction(weed_emoji)
-
-        if message.author.name == 'thedreau':
-            boudreaux_emoji = discord.utils.get(message.guild.emojis, name='boudreaux')
-            await message.add_reaction(boudreaux_emoji)
 
     def _find_emoji_in_guild(self, name):
         guild = self.get_guild(int(os.environ.get('GUILD_ID')))
