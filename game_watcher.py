@@ -31,7 +31,6 @@ class HockeyGame:
         game_status = game['status']['detailedState']
 
         if 'In Progress' not in game_status:
-            logger.warning('Game not currently in progress')
             self._reset_score()
             return False
 
@@ -54,7 +53,6 @@ class HockeyGame:
             self.score['away']['name'] = self._get_team_name(away_team)
             return True
 
-        logger.info(f"score {self.score['home']['score']} - {self.score['away']['score']}")
 
     def format_score(self):
         home = self.score['home']
