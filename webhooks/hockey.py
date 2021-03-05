@@ -77,7 +77,7 @@ class Hockey:
 
     def _build_message(self, title, fields):
         return {
-            "type": 3,
+            "type": 4,
             "data": {
                 "tts": False,
                 "content": "",

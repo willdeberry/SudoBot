@@ -17,7 +17,7 @@ class CommandResponse:
     def parse_response(self):
         if self.command_name == 'fyc':
             return {
-                "type": 3,
+                "type": 4,
                 "data": {
                     "tts": False,
                     "content": "https://tenor.com/view/rick-james-fuck-yo-couch-dirty-shoes-couch-stomp-gif-16208682",

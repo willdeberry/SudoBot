@@ -19,7 +19,7 @@ class Stocks:
             price = response['error']['message']
 
         return {
-            "type": 3,
+            "type": 4,
             "data": {
                 "tts": False,
                 "content": "",
