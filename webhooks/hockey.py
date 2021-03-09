@@ -8,14 +8,19 @@ class Hockey:
     _base_url = 'https://statsapi.web.nhl.com'
 
     def tbl_next_game(self):
-        data = requests.get(f'{self._base_url}/api/v1/teams/14?expand=team.schedule.next').json()
+        data = requests.get(f'{self._base_url}/api/v1/teams/14?expand=team.schedule.next&expand=schedule.broadcasts').json()
         next_game = data['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]
         next_game_date = next_game['gameDate']
         game_time_utc = dateutil.parser.parse(next_game_date)
         game_time_est = game_time_utc.astimezone(pytz.timezone('America/New_York'))
         teams = next_game['teams']
         venue = next_game['venue']['name']
+        tv_channels = []
+        broadcasts = next_game['broadcasts']
         versus = 'Unknown'
+
+        for broadcast in broadcasts:
+            tv_channels.append(broadcast['name'])
 
         if teams['away']['team']['id'] != 14:
             versus = teams['away']['team']['name']
@@ -25,7 +30,8 @@ class Hockey:
 
         fields = [
             {'name': 'Date', 'value': f"{game_time_est.strftime('%D %H:%M')} vs {versus}"},
-            {'name': 'Venue', 'value': f'{venue}'}
+            {'name': 'Venue', 'value': f'{venue}'},
+            {'name': 'Broadcasts', 'value': ', '.join(tv_channels)}
         ]
 
         return self._build_message('Next TBL Game', fields)
