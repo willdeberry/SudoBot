@@ -6,6 +6,10 @@ from logger import logger
 
 class HockeyGame:
     _base_url = 'https://statsapi.web.nhl.com'
+    status = {
+        'goal': False,
+        'start': False
+    }
     score = {
         'home': {
             'name': None,
@@ -18,7 +22,7 @@ class HockeyGame:
     }
 
     def did_score(self):
-        self._update = False
+        self.status['goal'] = False
         data = requests.get(f'{self._base_url}/api/v1/schedule?expand=schedule.linescore&teamId=14').json()
 
         try:
@@ -26,32 +30,34 @@ class HockeyGame:
         except IndexError:
             logger.warning('No game scheduled today')
             self._reset_score()
-            return False
+            return self.status
 
         game_status = game['status']['detailedState']
 
         if 'In Progress' not in game_status:
             self._reset_score()
-            return False
+            return self.status
 
         home_team = game['teams']['home']
         away_team = game['teams']['away']
 
         if self.score['home']['score'] is None or self.score['away']['score'] is None:
             logger.warning('Scoreboard initialized')
+            self.status['start'] = True
             self.score['home']['score'] = home_team['score']
             self.score['away']['score'] = away_team['score']
-            return False
+            return self.status
 
 
         if home_team['score'] != self.score['home']['score'] or away_team['score'] != self.score['away']['score']:
             logger.info('goal scored!!')
+            self.status['goal'] = True
             self.score['home']['score'] = home_team['score']
             self.score['away']['score'] = away_team['score']
 
             self.score['home']['name'] = self._get_team_name(home_team)
             self.score['away']['name'] = self._get_team_name(away_team)
-            return True
+            return self.status
 
 
     def format_score(self):
@@ -67,6 +73,8 @@ class HockeyGame:
         return team_data['teams'][0]['abbreviation']
 
     def _reset_score(self):
+        self.status['goal'] = False
+        self.status['start'] = False
         self.score['home']['name'] = None
         self.score['home']['score'] = None
         self.score['away']['name'] = None

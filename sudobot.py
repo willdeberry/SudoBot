@@ -101,15 +101,27 @@ class SudoBot(discord.Client):
 
         await sports_channel.send(embed = embed)
 
+    async def _report_game_start(self):
+        _sports_channel = self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
+        sports_channel = await _sports_channel
+        tbl_emoji = self._find_emoji_in_guild('tbl')
+
+        fields = [{'name': f'{tbl_emoji}', 'value': 'Time to tune in!'}]
+        embed = self._build_embed('Game Start', fields, inline = False)
+
+        await sports_channel.send(embed = embed)
 
     async def check_score(self):
         await self.wait_until_ready()
         logger.info('checking score')
 
         while not self.is_closed():
-            goal = self.hockey_game.did_score()
+            game = self.hockey_game.did_score()
 
-            if goal:
+            if game['start']:
+                await self._report_game_start()
+
+            if game['goal']:
                 await self._report_score()
 
             await asyncio.sleep(5)
