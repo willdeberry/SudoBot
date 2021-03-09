@@ -68,6 +68,11 @@ class DiscordCommands:
                         "type": 3
                     }
                 ]
+            },
+            {
+                "name": "valheim",
+                "description": "Server IP",
+                "type": 1
             }
         ]
 

@@ -2,6 +2,7 @@
 import requests
 
 from hockey import Hockey
+from socket import gethostbyname
 from stocks import Stocks
 
 
@@ -40,3 +41,15 @@ class CommandResponse:
             if self.options[0]['name'] == 'price':
                 ticker = self.options[0]['value']
                 return self.stocks.get_price(ticker)
+
+        if self.command_name == 'valheim':
+            ip = gethostbyname('direct.sudoservers.com')
+            return {
+                "type": 4,
+                "data": {
+                    "tts": False,
+                    "content": ip,
+                    "embeds": [],
+                    "allowed_mentions": []
+                }
+            }
