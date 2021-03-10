@@ -23,6 +23,7 @@ class HockeyGame:
 
     def did_score(self):
         self.status['goal'] = False
+        self.status['start'] = False
         data = requests.get(f'{self._base_url}/api/v1/schedule?expand=schedule.linescore&teamId=14').json()
 
         try:
@@ -57,7 +58,8 @@ class HockeyGame:
 
             self.score['home']['name'] = self._get_team_name(home_team)
             self.score['away']['name'] = self._get_team_name(away_team)
-            return self.status
+
+        return self.status
 
 
     def format_score(self):

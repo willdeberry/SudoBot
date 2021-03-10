@@ -119,6 +119,7 @@ class SudoBot(discord.Client):
             game = self.hockey_game.did_score()
 
             if game['start']:
+                logger.info('game start')
                 await self._report_game_start()
 
             if game['goal']:
