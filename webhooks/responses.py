@@ -27,6 +27,17 @@ class CommandResponse:
                 }
             }
 
+        if self.command_name == 'savior':
+            return {
+                "type": 4,
+                "data": {
+                    "tts": False,
+                    "content": "https://tenor.com/view/buddy-christ-dogma-george-carlin-thumbs-up-gif-3486405",
+                    "embeds": [],
+                    "allowed_mentions": []
+                }
+            }
+
         if self.command_name == 'tbl':
             if self.options[0]['name'] == 'next':
                 return self.hockey.tbl_next_game()

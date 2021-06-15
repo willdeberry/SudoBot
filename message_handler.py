@@ -38,6 +38,11 @@ class DiscordCommands:
                 "type": 1
             },
             {
+                "name": "savior",
+                "description": "Savior",
+                "type": 1
+            },
+            {
                 "name": "tbl",
                 "description": "TBL Information",
                 "options": [
