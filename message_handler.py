@@ -43,6 +43,11 @@ class DiscordCommands:
                 "type": 1
             },
             {
+                "name": "gang",
+                "description": "Gang gang",
+                "type": 1
+            },
+            {
                 "name": "tbl",
                 "description": "TBL Information",
                 "options": [

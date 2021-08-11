@@ -38,6 +38,17 @@ class CommandResponse:
                 }
             }
 
+        if self.command_name == 'gang':
+            return {
+                "type": 4,
+                "data": {
+                    "tts": False,
+                    "content": "https://sudobot-images.s3.amazonaws.com/gang.png",
+                    "embeds": [],
+                    "allowed_mentions": []
+                }
+            }
+
         if self.command_name == 'tbl':
             if self.options[0]['name'] == 'next':
                 return self.hockey.tbl_next_game()
