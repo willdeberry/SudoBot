@@ -6,7 +6,7 @@ from discord.ext import tasks
 from dotenv import load_dotenv
 import os
 
-from game_watcher import HockeyGame
+from nhl import HockeyGame
 from logger import logger
 from message_handler import DiscordCommands
 from status import Status
