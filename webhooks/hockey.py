@@ -3,6 +3,8 @@ import dateutil.parser
 import pytz
 import requests
 
+from helpers import build_message
+
 
 class Hockey:
     _base_url = 'https://statsapi.web.nhl.com'
@@ -34,7 +36,7 @@ class Hockey:
             {'name': 'Broadcasts', 'value': ', '.join(tv_channels)}
         ]
 
-        return self._build_message('Next TBL Game', fields)
+        return build_message('Next TBL Game', fields)
 
     def tbl_record(self):
         data = requests.get(f'{self._base_url}/api/v1/teams/14?expand=team.stats').json()
@@ -46,7 +48,7 @@ class Hockey:
         points = stats['pts']
         fields = [{'name': 'GP | W-L-O | PTS', 'value': f'{games_played} | {wins}-{losses}-{ot} | {points}'}]
 
-        return self._build_message('TBL Current Record', fields)
+        return build_message('TBL Current Record', fields)
 
     def tbl_score(self):
         data = requests.get(f'{self._base_url}/api/v1/schedule?expand=schedule.linescore&teamId=14').json()
@@ -69,7 +71,7 @@ class Hockey:
         away_name = self._get_team_name(away_team)
 
         fields = [{'name': 'Game', 'value': f'{home_name} {home_score} - {away_score} {away_name}'}]
-        return self._build_message('Current Score', fields)
+        return build_message('Current Score', fields)
 
     def _get_team_name(self, data):
         api = data['team']['link']
@@ -79,22 +81,5 @@ class Hockey:
 
     def _no_game(self):
         fields = [{'name': 'No game in progress', 'value': 'N/A'}]
-        return self._build_message('Curent Score', fields)
-
-    def _build_message(self, title, fields):
-        return {
-            "type": 4,
-            "data": {
-                "tts": False,
-                "content": "",
-                "embeds": [
-                    {
-                        "title": title,
-                        "type": "rich",
-                        "fields": fields
-                    }
-                ],
-                "allowed_mentions": []
-            }
-        }
+        return build_message('Curent Score', fields)
 
