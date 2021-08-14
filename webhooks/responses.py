@@ -1,12 +1,14 @@
 
 import requests
 
+from football import Football
 from hockey import Hockey
 from socket import gethostbyname
 from stocks import Stocks
 
 
 class CommandResponse:
+    football = Football()
     hockey = Hockey()
     stocks = Stocks()
 
@@ -52,6 +54,16 @@ class CommandResponse:
         if self.command_name == 'tbl':
             if self.options[0]['name'] == 'next':
                 return self.hockey.tbl_next_game()
+
+            if self.options[0]['name'] == 'record':
+                return self.hockey.tbl_record()
+
+            if self.options[0]['name'] == 'score':
+                return self.hockey.tbl_score()
+
+        if self.command_name == 'bucs':
+            if self.options[0]['name'] == 'next':
+                return self.football.bucs_next_game()
 
             if self.options[0]['name'] == 'record':
                 return self.hockey.tbl_record()

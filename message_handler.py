@@ -69,6 +69,27 @@ class DiscordCommands:
                 ]
             },
             {
+                "name": "bucs",
+                "description": "Buc's Information",
+                "options": [
+                    {
+                        "name": "next",
+                        "description": "When is the next game",
+                        "type": 1
+                    },
+                    {
+                        "name": "record",
+                        "description": "What is the Buc's current record",
+                        "type": 1
+                    },
+                    {
+                        "name": "score",
+                        "description": "What is the score of the in progress game",
+                        "type": 1
+                    }
+                ]
+            },
+            {
                 "name": "stocks",
                 "description": "Stock information",
                 "options": [
