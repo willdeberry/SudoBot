@@ -29,3 +29,27 @@ class Football:
         ]
 
         return build_message("Next Buc's Game", fields)
+
+    def bucs_record(self):
+        games_played = int(0)
+        record = '0-0'
+
+        data = requests.get(f'{self._base_url}/teams/27').json()
+        recordData = data['team']['record']['items']
+
+        for item in recordData:
+            if item['type'] != 'total':
+                continue
+
+            record = item['summary']
+            stats = item['stats']
+
+            for stat in stats:
+                if stat['name'] != 'gamesPlayed':
+                    continue
+
+                games_played = int(stat['value'])
+
+        fields = [{'name': 'GP | W-L', 'value': f'{games_played} | {record}'}]
+
+        return build_message("Buc's Current Record", fields)

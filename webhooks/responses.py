@@ -66,7 +66,7 @@ class CommandResponse:
                 return self.football.bucs_next_game()
 
             if self.options[0]['name'] == 'record':
-                return self.hockey.tbl_record()
+                return self.football.bucs_record()
 
             if self.options[0]['name'] == 'score':
                 return self.hockey.tbl_score()
