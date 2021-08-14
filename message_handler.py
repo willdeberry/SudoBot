@@ -81,11 +81,6 @@ class DiscordCommands:
                         "name": "record",
                         "description": "What is the Buc's current record",
                         "type": 1
-                    },
-                    {
-                        "name": "score",
-                        "description": "What is the score of the in progress game",
-                        "type": 1
                     }
                 ]
             },
