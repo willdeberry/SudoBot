@@ -29,7 +29,6 @@ class HockeyGame:
         try:
             game = data['dates'][0]['games'][0]
         except IndexError:
-            logger.warning('No game scheduled today')
             self._reset_score()
             return self.status
 
