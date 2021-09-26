@@ -18,11 +18,14 @@ class Hockey:
         teams = next_game['teams']
         venue = next_game['venue']['name']
         tv_channels = []
-        broadcasts = next_game['broadcasts']
+        broadcasts = next_game.get('broadcasts', None)
         versus = 'Unknown'
 
-        for broadcast in broadcasts:
-            tv_channels.append(broadcast['name'])
+        if broadcasts:
+            for broadcast in broadcasts:
+                tv_channels.append(broadcast['name'])
+        else:
+            tv_channels.append('N/A')
 
         if teams['away']['team']['id'] != 14:
             versus = teams['away']['team']['name']
