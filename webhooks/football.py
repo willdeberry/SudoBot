@@ -12,7 +12,7 @@ class Football:
     def bucs_next_game(self):
         data = requests.get(f'{self._base_url}/teams/27').json()
         next_game = data['team']['nextEvent'][0]
-        tv_channels = next_game['competitions'][0]['broadcasts']
+        tv_channels = next_game['competitions'][0]['broadcasts'][0]['media']['shortName']
         teams = next_game['shortName']
         next_game_date = next_game['date']
         game_time_utc = dateutil.parser.parse(next_game_date)
