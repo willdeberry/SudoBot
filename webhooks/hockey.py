@@ -36,7 +36,8 @@ class Hockey:
         fields = [
             {'name': 'Date', 'value': f"{game_time_est.strftime('%D %H:%M')} vs {versus}"},
             {'name': 'Venue', 'value': f'{venue}'},
-            {'name': 'Broadcasts', 'value': ', '.join(tv_channels)}
+            {'name': 'Broadcasts', 'value': ', '.join(tv_channels)},
+            {'name': 'Streams', 'value': '[CastStreams](https://www.caststreams.com/), [CrackStreams](http://crackstreams.biz/nhlstreams/)'}
         ]
 
         return build_message('Next TBL Game', fields)
