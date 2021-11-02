@@ -1,5 +1,6 @@
 
 import requests
+from time import sleep
 
 from logger import logger
 
@@ -31,6 +32,8 @@ class HockeyGame:
         except IndexError:
             self._reset_score()
             return self.status
+        except:
+            sleep(10)
 
         game_status = game['status']['detailedState']
 
