@@ -5,12 +5,21 @@ import requests
 import os
 from dotenv import load_dotenv
 
+from plex import Plex
 from responses import CommandResponse
 
 
 load_dotenv()
 app = Flask(__name__)
 public_key = os.environ.get('PUBLIC_KEY')
+
+
+@app.route('/plex', methods = ['POST'])
+def plex():
+    payload = request.form.to_dict()
+    plex = Plex()
+    plex.handle_event(payload)
+    return 'Got it'
 
 
 @app.route('/status', methods = ['GET'])
