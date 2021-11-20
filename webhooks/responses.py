@@ -61,6 +61,9 @@ class CommandResponse:
             if self.options[0]['name'] == 'score':
                 return self.hockey.tbl_score()
 
+            if self.options[0]['name'] == 'standings':
+                return self.hockey.tbl_division_standings()
+
         if self.command_name == 'bucs':
             if self.options[0]['name'] == 'next':
                 return self.football.bucs_next_game()

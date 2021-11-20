@@ -65,6 +65,11 @@ class DiscordCommands:
                         "name": "score",
                         "description": "What is the score of the in progress game",
                         "type": 1
+                    },
+                    {
+                        "name": "standings",
+                        "description": "Current standings for division",
+                        "type": 1,
                     }
                 ]
             },
