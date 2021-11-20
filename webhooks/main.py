@@ -1,6 +1,6 @@
 
-from flask import Flask, jsonify, request, abort
-from discord_interactions import verify_key_decorator, InteractionType, InteractionResponseType
+from flask import Flask, jsonify, request, abort, Response
+from discord_interactions import verify_key_decorator
 import requests
 import os
 from dotenv import load_dotenv
@@ -19,18 +19,17 @@ def plex():
     payload = request.form.to_dict()
     plex = Plex()
     plex.handle_event(payload)
-    return 'Got it'
+    return Response(status = 204)
 
 
 @app.route('/status', methods = ['GET'])
 def status():
-    return 'Alive'
+    return Response(status = 204)
 
 
 @app.route('/', methods = ['POST'])
 @verify_key_decorator(public_key)
 def main():
-    print(request.json)
     response = CommandResponse(request.json)
     if request.json["type"] == 1:
         return jsonify({"type": 1})
