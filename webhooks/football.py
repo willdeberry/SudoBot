@@ -13,7 +13,7 @@ class Football:
         data = requests.get(f'{self._base_url}/teams/27').json()
         next_game = data['team']['nextEvent'][0]
         tv_channels = next_game['competitions'][0]['broadcasts'][0]['media']['shortName']
-        teams = next_game['shortName']
+        teams = next_game['name']
         next_game_date = next_game['date']
         game_time_utc = dateutil.parser.parse(next_game_date)
         game_time_est = game_time_utc.astimezone(pytz.timezone('America/New_York'))
@@ -23,12 +23,13 @@ class Football:
             tv_channels = 'Unavailable'
 
         fields = [
-            {'name': 'Date', 'value': f"{game_time_est.strftime('%D %H:%M')} {teams}"},
-            {'name': 'Venue', 'value': f'{venue}'},
-            {'name': 'Broadcasts', 'value': tv_channels}
+            {'name': 'Date', 'value': f"{game_time_est.strftime('%D %H:%M')} @ {venue}"},
+            {'name': 'Matchup', 'value': f'{teams}'},
+            {'name': 'Broadcasts', 'value': tv_channels, 'inline': True},
+            {'name': 'Streams', 'value': '[CrackStreams](http://crackstreams.biz/nflstreams/)', 'inline': True}
         ]
 
-        return build_message("Next Buc's Game", fields)
+        return build_message("Next Game", fields)
 
     def bucs_record(self):
         games_played = int(0)
@@ -50,6 +51,9 @@ class Football:
 
                 games_played = int(stat['value'])
 
-        fields = [{'name': 'GP | W-L', 'value': f'{games_played} | {record}'}]
+        fields = [
+            {'name': 'Games Played', 'value': games_played, 'inline': True},
+            {'name': 'Record', 'value': record, 'inline': True}
+        ]
 
-        return build_message("Buc's Current Record", fields)
+        return build_message("Buc's Record", fields)

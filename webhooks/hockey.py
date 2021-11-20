@@ -34,13 +34,13 @@ class Hockey:
             versus = teams['home']['team']['name']
 
         fields = [
-            {'name': 'Date', 'value': f"{game_time_est.strftime('%D %H:%M')} vs {versus}"},
-            {'name': 'Venue', 'value': f'{venue}'},
-            {'name': 'Broadcasts', 'value': ', '.join(tv_channels)},
-            {'name': 'Streams', 'value': '[CastStreams](https://www.caststreams.com/), [CrackStreams](http://crackstreams.biz/nhlstreams/)'}
+            {'name': 'Date', 'value': f"{game_time_est.strftime('%D %H:%M')} @ {venue}"},
+            {'name': 'Versus', 'value': f'{versus}'},
+            {'name': 'Broadcasts', 'value': ', '.join(tv_channels), 'inline': True},
+            {'name': 'Streams', 'value': '[CastStreams](https://www.caststreams.com/), [CrackStreams](http://crackstreams.biz/nhlstreams/)', 'inline': True}
         ]
 
-        return build_message('Next TBL Game', fields)
+        return build_message('Next Game', fields)
 
     def tbl_record(self):
         data = requests.get(f'{self._base_url}/api/v1/teams/14?expand=team.stats').json()
@@ -50,9 +50,15 @@ class Hockey:
         losses = stats['losses']
         ot = stats['ot']
         points = stats['pts']
-        fields = [{'name': 'GP | W-L-O | PTS', 'value': f'{games_played} | {wins}-{losses}-{ot} | {points}'}]
+        fields = [
+            {'name': 'Games Played', 'value': games_played},
+            {'name': 'Wins', 'value': wins, 'inline': True},
+            {'name': 'Losses', 'value': losses, 'inline': True},
+            {'name': 'OT Losses', 'value': ot, 'inline': True},
+            {'name': 'Points', 'value': points}
+        ]
 
-        return build_message('TBL Current Record', fields)
+        return build_message("TBL's Record", fields)
 
     def tbl_score(self):
         data = requests.get(f'{self._base_url}/api/v1/schedule?expand=schedule.linescore&teamId=14').json()
