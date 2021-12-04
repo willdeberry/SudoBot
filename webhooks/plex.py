@@ -1,4 +1,5 @@
 
+import datetime
 import discord
 from dotenv import load_dotenv
 import io
@@ -28,7 +29,15 @@ class Plex:
         embed = discord.Embed()
         embed.title = f'{metadata["title"]}'
         embed.description = metadata["summary"]
-        embed.add_field(name = 'Year', value = metadata['year'])
+
+        if metadata['librarySectionType'] == 'show':
+            embed.title = f'{metadata["grandparentTitle"]} {metadata["parentTitle"]}: {metadata["title"]}'
+
+        if 'duration' in metadata:
+            embed.add_field(name = 'Duration', value = str(datetime.timedelta(0, 0, 0, metadata['duration'])))
+
+        if 'year' in metadata:
+            embed.add_field(name = 'Year', value = metadata['year'])
 
         if thumbnail:
             embed.set_thumbnail(url = 'attachment://cover.jpg')
