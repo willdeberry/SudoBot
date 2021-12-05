@@ -4,7 +4,6 @@ import logging.handlers
 import os
 import os.path
 import sys
-from systemd.journal import JournalHandler
 
 
 # {}-formatting adapter taken from logging cookbook:
@@ -117,7 +116,7 @@ class StyleAdapter(logging.LoggerAdapter):
 
 
 _logger = logging.getLogger(__name__)
-_handler = JournalHandler(SYSLOG_IDENTIFIER = os.path.basename( sys.argv[0]))
+_handler = logging.StreamHandler()
 _logger.addHandler(_handler)
 
 logger = StyleAdapter(_logger)
