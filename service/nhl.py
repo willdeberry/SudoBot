@@ -25,11 +25,17 @@ class HockeyGame:
     def did_score(self):
         self.status['goal'] = False
         self.status['start'] = False
-        data = requests.get(f'{self._base_url}/api/v1/schedule?expand=schedule.linescore&teamId=14').json()
+
+        try:
+            data = requests.get(f'{self._base_url}/api/v1/schedule?expand=schedule.linescore&teamId=14').json()
+        except requests.exceptions.ConnectionError:
+            logger.info('Connection Error')
+            return self.status
 
         try:
             game = data['dates'][0]['games'][0]
         except IndexError:
+            logger.info('IndexError')
             self._reset_score()
             return self.status
         except:
@@ -38,6 +44,7 @@ class HockeyGame:
         game_status = game['status']['detailedState']
 
         if 'In Progress' not in game_status:
+            logger.info('No game')
             self._reset_score()
             return self.status
 
