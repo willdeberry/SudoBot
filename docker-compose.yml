@@ -27,7 +27,7 @@ services:
 
     sudobot_service:
         build: ./service
-        container_name: sudobot_services
+        container_name: sudobot_service
         volumes:
             - ./service:/usr/bin/sudobot
 
