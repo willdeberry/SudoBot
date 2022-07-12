@@ -4,6 +4,7 @@ services:
   nginx:
     image: nginx:latest
     container_name: nginx
+    mem_limit: 512M
     ports:
       - 80:80
       - 443:443
@@ -20,13 +21,15 @@ services:
   sudobot_webhooks:
     build: ./webhooks
     container_name: sudobot_webhooks
+    mem_limit: 512M
     ports:
       - 8080:8080
     volumes:
       - ./webhooks:/var/www/sudobot
 
-    sudobot_service:
-      build: ./service
-      container_name: sudobot_service
-      volumes:
-        - ./service:/usr/bin/sudobot
+  sudobot_service:
+    build: ./service
+    container_name: sudobot_service
+    mem_limit: 512M
+    volumes:
+      - ./service:/usr/bin/sudobot
