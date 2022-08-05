@@ -74,6 +74,10 @@ class SudoBot(discord.Client):
             weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
             await message.add_reaction(weed_emoji)
 
+        if 'jeep' in message.content:
+            jeep_emoji = discord.utils.get(message.guild.emojis, name='rubberduck')
+            await message.add_reaction(jeep_emoji)
+
     def _find_emoji_in_guild(self, name):
         guild = self.get_guild(int(os.environ.get('GUILD_ID')))
         emojis = guild.emojis
