@@ -70,11 +70,11 @@ class SudoBot(discord.Client):
                 await message.channel.send(embed = embed)
 
 
-        if 'weed' in message.content:
+        if 'weed' in message.content.lower():
             weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
             await message.add_reaction(weed_emoji)
 
-        if 'jeep' in message.content:
+        if 'jeep' in message.content.lower():
             jeep_emoji = discord.utils.get(message.guild.emojis, name='rubberduck')
             await message.add_reaction(jeep_emoji)
 
