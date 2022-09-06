@@ -19,6 +19,7 @@ class SudoBot(discord.Client):
     discord_commands = DiscordCommands()
     hockey_game = HockeyGame()
     status = Status(os.environ.get('UPTIME_ROBOT_API_KEY'))
+    read_only_channels = ['downloads', 'server-status']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,6 +35,10 @@ class SudoBot(discord.Client):
         logger.info(f'Received message in {message.channel.name}: {message.content}')
         if message.author == self.user:
             return
+
+        if message.channel.name in self.read_only_channels:
+            logger.info('removing message from read only room')
+            await message.delete()
 
         if message.content.startswith('$udo'):
             subcommand = message.content.split(' ')[1]
