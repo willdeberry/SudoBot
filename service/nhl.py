@@ -35,7 +35,6 @@ class HockeyGame:
         try:
             game = data['dates'][0]['games'][0]
         except IndexError:
-            logger.info('IndexError')
             self._reset_score()
             return self.status
         except:
