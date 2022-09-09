@@ -32,13 +32,12 @@ class SudoBot(discord.Client):
         await self.change_presence(activity = discord.Activity(type = discord.ActivityType.watching, name = 'for $udo'))
 
     async def on_message(self, message):
-        logger.info(f'Received message in {message.channel.name}: {message.content}')
+        logger.info(f'Received message in {message.channel.name} from {message.author}: {message.content}')
         if message.author == self.user:
             return
 
         if message.channel.name in self.read_only_channels:
-            logger.info('removing message from read only room')
-            await message.delete()
+            await self.handle_readonly(message)
 
         if message.content.startswith('$udo'):
             subcommand = message.content.split(' ')[1]
@@ -135,6 +134,16 @@ class SudoBot(discord.Client):
                 await self._report_score()
 
             await asyncio.sleep(5)
+
+    async def handle_readonly(self, message):
+        allowed_posters = ['transmission#0000']
+
+        logger.info(f'removing message from read only room posted by {message.author}')
+
+        if message.author in allowed_posters:
+            return
+
+        await message.delete()
 
 
 def main():
