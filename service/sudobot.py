@@ -136,7 +136,7 @@ class SudoBot(discord.Client):
             await asyncio.sleep(5)
 
     async def handle_readonly(self, message):
-        allowed_posters = ['transmission#0000']
+        allowed_posters = ['transmission#0000', 'UptimeRobot#0000']
 
         logger.info(f'removing message from read only room posted by {message.author}')
 
