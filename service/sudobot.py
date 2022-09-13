@@ -147,7 +147,9 @@ class SudoBot(discord.Client):
 
 
 def main():
-    client = SudoBot()
+    intents = discord.Intents.default()
+    intents.message_content = True
+    client = SudoBot(intents = intents)
     client.run(os.environ.get('BOT_TOKEN'))
 
 
