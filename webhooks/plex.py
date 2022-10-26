@@ -1,4 +1,5 @@
 
+import aiohttp
 import datetime
 import discord
 from dotenv import load_dotenv
@@ -11,10 +12,9 @@ import requests
 class Plex:
 
     def __init__(self):
-        self.webhook = None
-        self._get_webhook()
+        self.thumbnail = None
 
-    def handle_event(self, payload):
+    async def handle_event(self, payload):
         data = json.loads(payload['payload'])
         event = data['event']
 
@@ -22,10 +22,11 @@ class Plex:
             return
 
         metadata = data['Metadata']
-        self._send_webhook(metadata)
+        embed = self._process_metadata(metadata)
+        await self._send_webhook(embed)
 
-    def _send_webhook(self, metadata):
-        thumbnail = self._download_thumbnail(metadata['thumb'])
+    def _process_metadata(self, metadata):
+        self.thumbnail = self._download_thumbnail(metadata['thumb'])
         embed = discord.Embed()
         embed.title = f'{metadata["title"]}'
         embed.description = metadata["summary"]
@@ -39,10 +40,17 @@ class Plex:
         if 'year' in metadata:
             embed.add_field(name = 'Year', value = metadata['year'])
 
-        if thumbnail:
+        if self.thumbnail:
             embed.set_thumbnail(url = 'attachment://cover.jpg')
 
-        self.webhook.send(embed = embed, file = thumbnail)
+        return embed
+
+    async def _send_webhook(self, embed):
+        webhook_url = os.environ.get('DISCORD_WEBHOOK')
+
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(webhook_url, session = session)
+            await webhook.send(embed = embed, file = self.thumbnail)
 
     def _download_thumbnail(self, thumb):
         url = os.environ.get('PLEX_URL')
@@ -56,11 +64,3 @@ class Plex:
             return None
         else:
             return discord.File(io.BytesIO(thumbnail.content), 'cover.jpg')
-
-    def _get_webhook(self):
-        webhook_url = os.environ.get('DISCORD_WEBHOOK')
-        r = requests.get(webhook_url).json()
-        webhook_id = r['id']
-        webhook_token = r['token']
-
-        self.webhook = discord.Webhook.partial(webhook_id, webhook_token, adapter = discord.RequestsWebhookAdapter())

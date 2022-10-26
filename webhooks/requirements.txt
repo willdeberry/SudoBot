@@ -1,6 +1,6 @@
 discord
 discord-interactions
-flask
+flask[async]
 python-dateutil
 python-dotenv
 pytz

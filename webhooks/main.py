@@ -1,4 +1,5 @@
 
+import aiohttp
 from flask import Flask, jsonify, request, abort, Response
 from discord_interactions import verify_key_decorator
 import requests
@@ -15,11 +16,11 @@ public_key = os.environ.get('PUBLIC_KEY')
 
 
 @app.route('/plex', methods = ['POST'])
-def plex():
+async def plex():
     payload = request.form.to_dict()
     print(payload)
     plex = Plex()
-    plex.handle_event(payload)
+    await plex.handle_event(payload)
     return Response(status = 204)
 
 
