@@ -100,14 +100,13 @@ class SudoBot(discord.Client):
 
 
     async def _report_score(self):
-        _sports_channel = self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
-        sports_channel = await _sports_channel
-        goal_emoji = self._find_emoji_in_guild('goal')
+        sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
+        score = self.hockey_game.format_score()
+        home = score['home']
+        away = score['away']
+        content = f"Goal Scored: {home['name']} {home['score']} - {away['name']} {away['score']}"
 
-        fields = [{'name': f'{goal_emoji}  {goal_emoji}  {goal_emoji}', 'value': self.hockey_game.format_score()}]
-        embed = self._build_embed('Goal Scored', fields, inline = False)
-
-        await sports_channel.send(embed = embed)
+        await sports_channel.send(content = content)
 
     async def _report_game_start(self):
         _sports_channel = self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))

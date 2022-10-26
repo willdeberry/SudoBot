@@ -79,7 +79,10 @@ class HockeyGame:
         home = self.score['home']
         away = self.score['away']
 
-        return f"{home['name']} {home['score']} - {away['score']} {away['name']}"
+        return {
+                'home': {'name': home['name'], 'score': home['score']},
+                'away': {'name': away['name'], 'score': away['score']}
+               }
 
     def _get_team_name(self, data):
         api = data['team']['link']
