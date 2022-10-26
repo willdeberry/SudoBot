@@ -2,7 +2,6 @@
 
 import asyncio
 import discord
-from discord.ext import tasks
 from dotenv import load_dotenv
 import os
 
@@ -25,6 +24,7 @@ class SudoBot(discord.Client):
         super().__init__(*args, **kwargs)
         self.discord_commands.register_commands()
 
+    async def setup_hook(self) -> None:
         self.bg_task = self.loop.create_task(self.check_score())
 
     async def on_ready(self):
