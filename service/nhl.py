@@ -6,6 +6,7 @@ from logger import logger
 
 
 class HockeyGame:
+    checked_and_logged = False
     _base_url = 'https://statsapi.web.nhl.com'
     status = {
         'goal': False,
@@ -43,10 +44,13 @@ class HockeyGame:
         game_status = game['status']['detailedState']
 
         if 'In Progress' not in game_status:
-            logger.info('No game')
+            if not checked_and_logged:
+                checked_and_logged = True
+                logger.info('No game')
             self._reset_score()
             return self.status
 
+        checked_and_logged = False
         home_team = game['teams']['home']
         away_team = game['teams']['away']
 
