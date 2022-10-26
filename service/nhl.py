@@ -44,13 +44,14 @@ class HockeyGame:
         game_status = game['status']['detailedState']
 
         if 'In Progress' not in game_status:
-            if not checked_and_logged:
-                checked_and_logged = True
+            if not self.checked_and_logged:
                 logger.info('No game')
+                self.checked_and_logged = True
+
             self._reset_score()
             return self.status
 
-        checked_and_logged = False
+        self.checked_and_logged = False
         home_team = game['teams']['home']
         away_team = game['teams']['away']
 
