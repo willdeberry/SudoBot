@@ -2,6 +2,7 @@
 
 import asyncio
 import discord
+from discord.ext import tasks
 from dotenv import load_dotenv
 import os
 
@@ -26,12 +27,10 @@ class SudoBot(discord.Client):
         super().__init__(*args, **kwargs)
         self.discord_commands.register_commands()
 
-    async def setup_hook(self) -> None:
-        self.bg_task = self.loop.create_task(self.check_score())
-
     async def on_ready(self):
         logger.info(f'Bot logged in as {self.user}')
         await self.change_presence(activity = discord.Activity(type = discord.ActivityType.watching, name = 'for $udo'))
+        self.check_score.start()
 
     async def on_message(self, message):
         logger.info(f'Received message in {message.channel.name} from {message.author}: {message.content}')
@@ -75,7 +74,6 @@ class SudoBot(discord.Client):
                 embed = self._build_embed('Current server statuses', current_status)
                 await message.channel.send(embed = embed)
 
-
         if 'weed' in message.content.lower():
             weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
             await message.add_reaction(weed_emoji)
@@ -83,6 +81,38 @@ class SudoBot(discord.Client):
         if 'jeep' in message.content.lower():
             jeep_emoji = discord.utils.get(message.guild.emojis, name='rubberduck')
             await message.add_reaction(jeep_emoji)
+
+    @tasks.loop(seconds = 5)
+    async def check_score(self):
+        self.sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
+
+        game = self.hockey_game.did_score()
+
+        if game['scheduled'] and game['scheduled'] != self.game_status.get('scheduled'):
+            await self._report_game_scheduled()
+
+        if game['start'] and game['start'] != self.game_status.get('start'):
+            await self._report_game_start()
+
+        if game['goal']:
+            await self._report_score()
+
+        if not self.game_status:
+            self.game_status = game
+
+    @check_score.before_loop
+    async def before_check_score(self):
+        logger.info('waiting for bot to start loop...')
+        await self.wait_until_ready()
+
+    async def handle_readonly(self, message):
+        allowed_posters = ['Plex#0000', 'transmission#0000', 'UptimeRobot#0000']
+
+        if str(message.author) in allowed_posters:
+            return
+
+        logger.info(f'removing message from read only room posted by {message.author}')
+        await message.delete()
 
     def _find_emoji_in_guild(self, name):
         guild = self.get_guild(int(os.environ.get('GUILD_ID')))
@@ -134,43 +164,6 @@ class SudoBot(discord.Client):
         embed = self._build_embed('Game Start', fields, inline = False)
 
         await self.sports_channel.send(embed = embed)
-
-    async def check_score(self):
-        await self.wait_until_ready()
-        logger.info('checking score')
-        self.sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
-
-        while not self.is_closed():
-            game = self.hockey_game.did_score()
-
-            if game['scheduled']:
-                if self.game_status.get('scheduled') == game['scheduled']:
-                    continue
-
-                await self._report_game_scheduled()
-
-            if game['start']:
-                if self.game_status.get('start') == game['start']:
-                    continue
-
-                await self._report_game_start()
-
-            if game['goal']:
-                await self._report_score()
-
-            if not self.game_status:
-                self.game_status = game
-
-            await asyncio.sleep(10)
-
-    async def handle_readonly(self, message):
-        allowed_posters = ['Plex#0000', 'transmission#0000', 'UptimeRobot#0000']
-
-        if str(message.author) in allowed_posters:
-            return
-
-        logger.info(f'removing message from read only room posted by {message.author}')
-        await message.delete()
 
 
 def main():
