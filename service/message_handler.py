@@ -90,17 +90,6 @@ class DiscordCommands:
                 ]
             },
             {
-                "name": "stocks",
-                "description": "Stock information",
-                "options": [
-                    {
-                        "name": "price",
-                        "description": "Price of the stock",
-                        "type": 3
-                    }
-                ]
-            },
-            {
                 "name": "valheim",
                 "description": "Server IP",
                 "type": 1
