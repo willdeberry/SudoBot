@@ -145,6 +145,7 @@ class SudoBot(discord.Client):
         away_name = data['away']['name']
         away_record = data['away']['record']
         tv_channels = ', '.join(data['broadcasts'])
+        goal_emoji = self._find_emoji_in_guild('goal')
 
         fields = [
                 {'name': 'Date', 'value': f"{data['time']} @ {data['venue']}"},
@@ -153,7 +154,7 @@ class SudoBot(discord.Client):
                 {'name': 'Streams', 'value': '[CastStreams](https://www.caststreams.com/), [CrackStreams](http://crackstreams.biz/nhlstreams/)', 'inline': True}
             ]
 
-        embed = self._build_embed("Today's Game", fields, inline = False)
+        embed = self._build_embed(f'{goal_emoji} Today is Gameday! {goal_emoji}', fields, inline = False)
 
         await self.sports_channel.send(embed = embed)
 
