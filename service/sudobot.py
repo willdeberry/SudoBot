@@ -132,7 +132,7 @@ class SudoBot(discord.Client):
             if game['goal']:
                 await self._report_score()
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(10)
 
     async def handle_readonly(self, message):
         allowed_posters = ['Plex#0000', 'transmission#0000', 'UptimeRobot#0000']
