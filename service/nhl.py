@@ -15,7 +15,7 @@ class HockeyGame:
         'scheduled': False,
         'start': False
     }
-    score = {
+    game_data = {
         'home': {
             'name': None,
             'score': None
@@ -40,7 +40,7 @@ class HockeyGame:
         try:
             game = data['dates'][0]['games'][0]
         except IndexError:
-            self._reset_score()
+            self._reset_game_data()
             return self.status
         except:
             sleep(10)
@@ -60,12 +60,12 @@ class HockeyGame:
                     logger.info('No game scheduled')
 
                 self.initialized = True
-                self._reset_score()
+                self._reset_game_data()
                 return self.status
 
     def format_score(self):
-        home = self.score['home']
-        away = self.score['away']
+        home = self.game_data['home']
+        away = self.game_data['away']
 
         return {
                 'home': {'name': home['name'], 'score': home['score']},
@@ -81,36 +81,36 @@ class HockeyGame:
     def _report_in_progress(self, home_team, away_team):
         logger.info('Game currently in progress')
 
-        if self.score['home']['score'] is None or self.score['away']['score'] is None:
+        if self.game_data['home']['score'] is None or self.game_data['away']['score'] is None:
             logger.warning('Scoreboard initialized')
             self.status['start'] = True
-            self.score['home']['score'] = home_team['score']
-            self.score['away']['score'] = away_team['score']
+            self.game_data['home']['score'] = home_team['score']
+            self.game_data['away']['score'] = away_team['score']
 
-        if home_team['score'] != self.score['home']['score'] or away_team['score'] != self.score['away']['score']:
+        if home_team['score'] != self.game_data['home']['score'] or away_team['score'] != self.game_data['away']['score']:
             logger.info('goal scored!!')
             self.status['goal'] = True
-            self.score['home']['score'] = home_team['score']
-            self.score['away']['score'] = away_team['score']
+            self.game_data['home']['score'] = home_team['score']
+            self.game_data['away']['score'] = away_team['score']
 
-            self.score['home']['name'] = self._get_team_name(home_team)
-            self.score['away']['name'] = self._get_team_name(away_team)
+            self.game_data['home']['name'] = self._get_team_name(home_team)
+            self.game_data['away']['name'] = self._get_team_name(away_team)
 
         return self.status
 
-    def _report_scheduled(self, url):
+    def _report_scheduled(self):
         if not self.status['scheduled']:
             logger.info('Game scheduled today')
 
         self.status['scheduled'] = True
         return self.status
 
-    def _reset_score(self):
+    def _reset_game_data(self):
         self.status['goal'] = False
         self.status['scheduled'] = False
         self.status['start'] = False
-        self.score['home']['name'] = None
-        self.score['home']['score'] = None
-        self.score['away']['name'] = None
-        self.score['away']['score'] = None
+        self.game_data['home']['name'] = None
+        self.game_data['home']['score'] = None
+        self.game_data['away']['name'] = None
+        self.game_data['away']['score'] = None
 
