@@ -1,4 +1,5 @@
 
+from datetime import datetime
 import requests
 from time import sleep
 
@@ -6,7 +7,7 @@ from logger import logger
 
 
 class HockeyGame:
-    checked_and_logged = False
+    scheduled_game = False
     _base_url = 'https://statsapi.web.nhl.com'
     status = {
         'goal': False,
@@ -26,11 +27,12 @@ class HockeyGame:
     def did_score(self):
         self.status['goal'] = False
         self.status['start'] = False
+        today = datetime.now().strftime('%Y-%m-%d')
 
         try:
-            data = requests.get(f'{self._base_url}/api/v1/schedule?expand=schedule.linescore&teamId=14').json()
+            data = requests.get(f'{self._base_url}/api/v1/schedule?expand=schedule.linescore&date={today}&teamId=14').json()
         except requests.exceptions.ConnectionError:
-            logger.info('Connection Error')
+            logger.error('Connection Error')
             return self.status
 
         try:
@@ -43,37 +45,19 @@ class HockeyGame:
 
         game_status = game['status']['detailedState']
 
-        if 'In Progress' not in game_status:
-            if not self.checked_and_logged:
-                logger.info('No game')
-                self.checked_and_logged = True
+        match game_status:
+            case 'Scheduled':
+                logger.info('Game scheduled today')
+                return self.status
+            case 'In Progress':
+                home_team = game['teams']['home']
+                away_team = game['teams']['away']
 
-            self._reset_score()
-            return self.status
-
-        self.checked_and_logged = False
-        home_team = game['teams']['home']
-        away_team = game['teams']['away']
-
-        if self.score['home']['score'] is None or self.score['away']['score'] is None:
-            logger.warning('Scoreboard initialized')
-            self.status['start'] = True
-            self.score['home']['score'] = home_team['score']
-            self.score['away']['score'] = away_team['score']
-            return self.status
-
-
-        if home_team['score'] != self.score['home']['score'] or away_team['score'] != self.score['away']['score']:
-            logger.info('goal scored!!')
-            self.status['goal'] = True
-            self.score['home']['score'] = home_team['score']
-            self.score['away']['score'] = away_team['score']
-
-            self.score['home']['name'] = self._get_team_name(home_team)
-            self.score['away']['name'] = self._get_team_name(away_team)
-
-        return self.status
-
+                return self._report_in_progress(home_team, away_team)
+            case _:
+                logger.info('No game scheduled')
+                self._reset_score()
+                return self.status
 
     def format_score(self):
         home = self.score['home']
@@ -89,6 +73,26 @@ class HockeyGame:
         url = f'{self._base_url}/{api}'
         team_data = requests.get(url).json()
         return team_data['teams'][0]['abbreviation']
+
+    def _report_in_progress(self, home_team, away_team):
+        logger.info('Game currently in progress')
+
+        if self.score['home']['score'] is None or self.score['away']['score'] is None:
+            logger.warning('Scoreboard initialized')
+            self.status['start'] = True
+            self.score['home']['score'] = home_team['score']
+            self.score['away']['score'] = away_team['score']
+
+        if home_team['score'] != self.score['home']['score'] or away_team['score'] != self.score['away']['score']:
+            logger.info('goal scored!!')
+            self.status['goal'] = True
+            self.score['home']['score'] = home_team['score']
+            self.score['away']['score'] = away_team['score']
+
+            self.score['home']['name'] = self._get_team_name(home_team)
+            self.score['away']['name'] = self._get_team_name(away_team)
+
+        return self.status
 
     def _reset_score(self):
         self.status['goal'] = False
