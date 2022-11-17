@@ -18,7 +18,7 @@ class SudoBot(discord.Client):
     discord_commands = DiscordCommands()
     hockey_game = HockeyGame()
     status = Status(os.environ.get('UPTIME_ROBOT_API_KEY'))
-    read_only_channels = ['downloads', 'server-status']
+    read_only_channels = ['downloads', 'plex', 'server-status']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -135,7 +135,7 @@ class SudoBot(discord.Client):
             await asyncio.sleep(5)
 
     async def handle_readonly(self, message):
-        allowed_posters = ['transmission#0000', 'UptimeRobot#0000']
+        allowed_posters = ['Plex#0000', 'transmission#0000', 'UptimeRobot#0000']
 
         if str(message.author) in allowed_posters:
             return
