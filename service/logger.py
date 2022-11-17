@@ -120,6 +120,7 @@ _handler = logging.StreamHandler()
 _logger.addHandler(_handler)
 
 logger = StyleAdapter(_logger)
+logger.setFormat('[{asctime:.19}] [{levelname:8}] {message}')
 
 _log_level = os.getenv( 'SUDO_LOGGER' )
 
