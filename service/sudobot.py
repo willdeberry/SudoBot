@@ -56,19 +56,6 @@ class SudoBot(discord.Client):
                 command_embed = self._build_embed('$udo Commands', commands, inline = False)
                 await message.channel.send(embed = command_embed)
 
-            if subcommand == 'remove':
-                if message.author.name != 'Will':
-                    await message.channel.send('You are not authorized to run this command')
-                    return
-
-                try:
-                    command_id = message.content.split(' ')[2]
-                    response = self.discord_commands.remove_command(command_id)
-                except IndexError:
-                    response = 'Please provide id of the command to remove'
-
-                await message.channel.send(response)
-
             if subcommand == 'status':
                 current_status = self.status.get_current()
                 embed = self._build_embed('Current server statuses', current_status)

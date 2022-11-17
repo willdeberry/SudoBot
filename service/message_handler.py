@@ -24,11 +24,6 @@ class DiscordCommands:
 
         return data
 
-    def remove_command(self, id):
-        url = f'{self._url}/{id}'
-        requests.delete(url, headers = self._headers)
-        return f'Removed command {id}'
-
     def register_commands(self):
         logger.info('Register commands')
         commands = [
