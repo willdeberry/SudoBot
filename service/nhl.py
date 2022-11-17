@@ -7,10 +7,12 @@ from logger import logger
 
 
 class HockeyGame:
+    initialized = False
     scheduled_game = False
     _base_url = 'https://statsapi.web.nhl.com'
     status = {
         'goal': False,
+        'scheduled': False,
         'start': False
     }
     score = {
@@ -47,15 +49,17 @@ class HockeyGame:
 
         match game_status:
             case 'Scheduled':
-                logger.info('Game scheduled today')
-                return self.status
+                return self._report_scheduled(game['link'])
             case 'In Progress':
                 home_team = game['teams']['home']
                 away_team = game['teams']['away']
 
                 return self._report_in_progress(home_team, away_team)
             case _:
-                logger.info('No game scheduled')
+                if not self.initialized:
+                    logger.info('No game scheduled')
+
+                self.initialized = True
                 self._reset_score()
                 return self.status
 
@@ -94,8 +98,16 @@ class HockeyGame:
 
         return self.status
 
+    def _report_scheduled(self, url):
+        if not self.status['scheduled']:
+            logger.info('Game scheduled today')
+
+        self.status['scheduled'] = True
+        return self.status
+
     def _reset_score(self):
         self.status['goal'] = False
+        self.status['scheduled'] = False
         self.status['start'] = False
         self.score['home']['name'] = None
         self.score['home']['score'] = None
