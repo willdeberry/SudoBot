@@ -19,6 +19,8 @@ class SudoBot(discord.Client):
     hockey_game = HockeyGame()
     status = Status(os.environ.get('UPTIME_ROBOT_API_KEY'))
     read_only_channels = ['downloads', 'plex', 'server-status']
+    sports_channel = None
+    game_status = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -99,37 +101,65 @@ class SudoBot(discord.Client):
         return embed
 
     async def _report_score(self):
-        sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
         score = self.hockey_game.format_score()
         home = score['home']
         away = score['away']
         content = f"Goal Scored: {home['name']} {home['score']} - {away['name']} {away['score']}"
 
-        await sports_channel.send(content = content)
+        await self.sports_channel.send(content = content)
+
+    async def _report_game_scheduled(self):
+        data = self.hockey_game.get_game_data()
+        home_name = data['home']['name']
+        home_record = data['home']['record']
+        away_name = data['away']['name']
+        away_record = data['away']['record']
+        tv_channels = ', '.join(data['broadcasts'])
+
+        fields = [
+                {'name': 'Date', 'value': f"{data['time']} @ {data['venue']}"},
+                {'name': 'Matchup', 'value': f"{away_name} ({away_record}) vs {home_name} ({home_record})"},
+                {'name': 'Broadcasts', 'value': tv_channels, 'inline': True},
+                {'name': 'Streams', 'value': '[CastStreams](https://www.caststreams.com/), [CrackStreams](http://crackstreams.biz/nhlstreams/)', 'inline': True}
+            ]
+
+        embed = self._build_embed("Today's Game", fields, inline = False)
+
+        await self.sports_channel.send(embed = embed)
 
     async def _report_game_start(self):
-        _sports_channel = self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
-        sports_channel = await _sports_channel
         tbl_emoji = self._find_emoji_in_guild('tbl')
 
         fields = [{'name': f'{tbl_emoji}', 'value': 'Time to tune in!'}]
         embed = self._build_embed('Game Start', fields, inline = False)
 
-        await sports_channel.send(embed = embed)
+        await self.sports_channel.send(embed = embed)
 
     async def check_score(self):
         await self.wait_until_ready()
         logger.info('checking score')
+        self.sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
 
         while not self.is_closed():
             game = self.hockey_game.did_score()
 
+            if game['scheduled']:
+                if self.game_status.get('scheduled') == game['scheduled']:
+                    continue
+
+                await self._report_game_scheduled()
+
             if game['start']:
-                logger.info('game start')
+                if self.game_status.get('start') == game['start']:
+                    continue
+
                 await self._report_game_start()
 
             if game['goal']:
                 await self._report_score()
+
+            if not self.game_status:
+                self.game_status = game
 
             await asyncio.sleep(10)
 

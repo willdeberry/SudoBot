@@ -1,3 +1,5 @@
 discord
+python-dateutil
 python-dotenv
+pytz
 requests
