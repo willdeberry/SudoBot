@@ -98,7 +98,6 @@ class SudoBot(discord.Client):
 
         return embed
 
-
     async def _report_score(self):
         sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
         score = self.hockey_game.format_score()
