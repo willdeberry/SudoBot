@@ -36,10 +36,9 @@ class HockeyGame:
 
     def did_score(self):
         self.status['goal'] = False
-        today = datetime.now().strftime('%Y-%m-%d')
 
         try:
-            data = requests.get(f'{self._base_url}/api/v1/schedule?&expand=schedule.broadcasts&expand=schedule.linescore&date={today}&teamId=14').json()
+            data = requests.get(f'{self._base_url}/api/v1/schedule?&expand=schedule.broadcasts&expand=schedule.linescore&teamId=14').json()
         except requests.exceptions.ConnectionError:
             logger.error('Connection Error')
             return self.status
