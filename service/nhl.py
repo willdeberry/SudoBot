@@ -8,7 +8,7 @@ from time import sleep
 from logger import logger
 
 
-class HockeyGame:
+class HockeyGameApi:
     _initialized = False
     _base_url = 'https://statsapi.web.nhl.com'
     status = {
@@ -69,15 +69,6 @@ class HockeyGame:
                 self._reset_game_data()
                 return self.status
 
-    def format_score(self):
-        home = self.game_data['home']
-        away = self.game_data['away']
-
-        return {
-                'home': {'name': home['name'], 'score': home['score']},
-                'away': {'name': away['name'], 'score': away['score']}
-               }
-
     def get_game_data(self):
         return self.game_data
 
@@ -136,11 +127,13 @@ class HockeyGame:
         return self.status
 
     def _reset_game_data(self):
-        self.status['goal'] = False
-        self.status['scheduled'] = False
-        self.status['start'] = False
-        self.game_data['home']['name'] = None
-        self.game_data['home']['score'] = None
-        self.game_data['away']['name'] = None
-        self.game_data['away']['score'] = None
+        self._process_dict(self.status)
+        self._process_dict(self.game_data)
 
+    def _process_dict(self, data):
+        for key, value in data.items():
+            if hasattr(value, 'items'):
+                self._process_dict()
+                continue
+
+            data[key] = None
