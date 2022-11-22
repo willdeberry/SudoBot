@@ -18,7 +18,6 @@ class HockeyUpdates:
     @tasks.loop(seconds = 5)
     async def check_score(self):
         game = self.hockey_game.did_score()
-        print(game)
 
         if game['end'] and game['end'] != self.game_status.get('end'):
             logger.info('reporting end of game')
