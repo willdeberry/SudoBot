@@ -12,27 +12,37 @@ class HockeyGame:
     _initialized = False
     _base_url = 'https://statsapi.web.nhl.com'
     status = {
-        'goal': False,
-        'scheduled': False,
-        'start': False
-    }
+            'end': False,
+            'goal': False,
+            'intermission': False,
+            'scheduled': False,
+            'start': False
+        }
     game_data = {
-        'broadcasts': ['N/A'],
-        'home': {
-            'id': None,
-            'name': None,
-            'score': None,
-            'record': None
-        },
-        'away': {
-            'id': None,
-            'name': None,
-            'score': None,
-            'record': None
-        },
-        'time': None,
-        'venue': None
-    }
+            'away': {
+                'id': None,
+                'name': None,
+                'score': None,
+                'sog': None,
+                'record': None
+            },
+            'broadcasts': ['N/A'],
+            'goalies': {
+                'winning': None,
+                'losing': None
+            },
+            'home': {
+                'id': None,
+                'name': None,
+                'score': None,
+                'sog': None,
+                'record': None
+            },
+            'period': None,
+            'stars': [],
+            'time': None,
+            'venue': None
+        }
 
     def did_score(self):
         self.status['goal'] = False
@@ -56,11 +66,21 @@ class HockeyGame:
         match game_status:
             case 'Scheduled':
                 return self._report_scheduled(game)
-            case 'In Progress':
-                home_team = game['teams']['home']
-                away_team = game['teams']['away']
+            case 'In Progress' | 'In Progress - Critical':
+                home_team = game['linescore']['teams']['home']
+                away_team = game['linescore']['teams']['away']
+                current_period = game['linescore']['currentPeriodOrdinal']
+                intermission = True if game['linescore']['currentPeriodTimeRemaining'] == 'END' else False
 
+                if intermission:
+                    return self._report_intermission(current_period, home_team, away_team)
+
+                self.status['intermission'] = False
                 return self._report_in_progress(home_team, away_team)
+            case 'Game Over' | 'Final':
+                home_team = game['linescore']['teams']['home']
+                away_team = game['linescore']['teams']['away']
+                return self._report_end(game['link'], home_team, away_team)
             case _:
                 if not self._initialized:
                     logger.info('No game scheduled')
@@ -132,23 +152,59 @@ class HockeyGame:
         fields = [{'name': 'No game in progress', 'value': 'N/A'}]
         return build_message('Curent Score', fields)
 
+    def _report_end(self, api, home_team, away_team):
+        data = requests.get(f'{self._base_url}{api}').json()
+        self.status['intermission'] = False
+        self.status['scheduled'] = False
+        self.status['start'] = False
+        self.status['end'] = True
+
+        results = data['liveData']['decisions']
+       # self.game_data['goalies']['winning'] = results['winner']['fullName']
+       # self.game_data['goalies']['losing'] = results['loser']['fullName']
+       # self.game_data['stars'].append(results['firstStar']['fullName'])
+       # self.game_data['stars'].append(results['secondStar']['fullName'])
+       # self.game_data['stars'].append(results['thirdStar']['fullName'])
+        self.game_data['home']['name'] = self._get_team_name(home_team)
+        self.game_data['home']['score'] = home_team['goals']
+        self.game_data['home']['sog'] = home_team['shotsOnGoal']
+        self.game_data['away']['name'] = self._get_team_name(away_team)
+        self.game_data['away']['score'] = away_team['goals']
+        self.game_data['away']['sog'] = away_team['shotsOnGoal']
+
+        return self.status
+
     def _report_in_progress(self, home_team, away_team):
         logger.info('Game currently in progress')
 
         if not self.status['start']:
             logger.warning('Scoreboard initialized')
             self.status['start'] = True
-            self.game_data['home']['score'] = home_team['score']
-            self.game_data['away']['score'] = away_team['score']
+            self.status['end'] = False
+            self.game_data['home']['score'] = home_team['goals']
+            self.game_data['away']['score'] = away_team['goals']
 
-        if home_team['score'] != self.game_data['home']['score'] or away_team['score'] != self.game_data['away']['score']:
+        if home_team['goals'] != self.game_data['home']['score'] or away_team['goals'] != self.game_data['away']['score']:
             logger.info('goal scored!!')
             self.status['goal'] = True
-            self.game_data['home']['score'] = home_team['score']
-            self.game_data['away']['score'] = away_team['score']
+            self.game_data['home']['score'] = home_team['goals']
+            self.game_data['away']['score'] = away_team['goals']
 
             self.game_data['home']['name'] = self._get_team_name(home_team)
             self.game_data['away']['name'] = self._get_team_name(away_team)
+
+        return self.status
+
+    def _report_intermission(self, period, home_team, away_team):
+        logger.info('Intermission')
+        self.status['intermission'] = True
+        self.status['period'] = period
+        self.game_data['home']['name'] = self._get_team_name(home_team)
+        self.game_data['home']['score'] = home_team['goals']
+        self.game_data['home']['sog'] = home_team['shotsOnGoal']
+        self.game_data['away']['name'] = self._get_team_name(away_team)
+        self.game_data['away']['score'] = away_team['goals']
+        self.game_data['away']['sog'] = away_team['shotsOnGoal']
 
         return self.status
 
