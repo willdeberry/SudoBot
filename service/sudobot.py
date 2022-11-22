@@ -17,20 +17,21 @@ load_dotenv()
 
 
 class SudoBot(discord.Client):
-    guild = discord.Object(id = os.environ['GUILD_ID'])
+    guild_id = discord.Object(id = os.environ['GUILD_ID'])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tree = discord.app_commands.CommandTree(self)
 
     async def setup_hook(self):
-        self.tree.copy_global_to(guild = self.guild)
-        await self.tree.sync(guild = self.guild)
+        self.tree.copy_global_to(guild = self.guild_id)
+        await self.tree.sync(guild = self.guild_id)
 
     async def on_ready(self):
         logger.info(f'Bot logged in as {self.user}')
         sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
-        hockey_updates = HockeyUpdates(self.guild, sports_channel)
+        guild = self.get_guild(int(os.environ.get('GUILD_ID')))
+        hockey_updates = HockeyUpdates(guild, sports_channel)
         hockey_updates.check_score.start()
 
     async def on_message(self, message):
@@ -90,8 +91,8 @@ def main():
         embed = build_embed('Current server statuses', current_status)
         await ctx.response.send_message(embed = embed)
 
-    client.tree.add_command(TBLCommands(), guild = client.guild)
-    client.tree.add_command(BucsCommands(), guild = client.guild)
+    client.tree.add_command(TBLCommands(), guild = client.guild_id)
+    client.tree.add_command(BucsCommands(), guild = client.guild_id)
     client.run(os.environ.get('BOT_TOKEN'))
 
 
