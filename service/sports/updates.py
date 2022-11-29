@@ -38,7 +38,7 @@ class HockeyUpdates:
         if game['goal']:
             await self._report_score()
 
-        self.game_status = game
+        self.game_status = game.copy()
 
     def _find_emoji_in_guild(self, name):
         emojis = self.guild.emojis
