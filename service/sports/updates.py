@@ -77,7 +77,7 @@ class HockeyUpdates:
         data = self.hockey_game.get_game_data()
         home = data['home']
         away = data['away']
-        content = f"Goal Scored: {home['name']} {home['score']} - {away['name']} {away['score']}"
+        content = f"Goal Scored: {home['name']} {home['score']} - {away['score']} {away['name']}"
 
         await self.sports_channel.send(content = content)
 
