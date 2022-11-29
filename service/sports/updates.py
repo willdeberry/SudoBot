@@ -119,8 +119,8 @@ class HockeyUpdates:
         away_sog = data['away']['sog']
 
         fields = [
-                {'name': home_name, 'value': f'Goals: {home_score} ({home_sog} sog)'},
-                {'name': away_name, 'value': f'Goals: {away_score} ({away_sog} sog)'}
+                {'name': home_name, 'value': f'{home_score} ({home_sog} sog)'},
+                {'name': away_name, 'value': f'{away_score} ({away_sog} sog)'}
                 ]
         embed = build_embed(f'End of {period} period', fields)
 
