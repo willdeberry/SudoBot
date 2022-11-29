@@ -19,19 +19,19 @@ class HockeyUpdates:
     async def check_score(self):
         game = self.hockey_game.did_score()
 
-        if game['end'] and game['end'] != self.game_status.get('end'):
+        if game['end'] and not self.game_status.get('end'):
             logger.info('reporting end of game')
             await self._report_end()
 
-        if game['scheduled'] and game['scheduled'] != self.game_status.get('scheduled'):
+        if game['scheduled'] and not self.game_status.get('scheduled'):
             logger.info('reporting game scheduled')
             await self._report_game_scheduled()
 
-        if game['start'] and game['start'] != self.game_status.get('start'):
+        if game['start'] and not self.game_status.get('start'):
             logger.info('reporting game start')
             await self._report_game_start()
 
-        if game['intermission'] and game['intermission'] != self.game_status.get('intermission'):
+        if game['intermission'] and not self.game_status.get('intermission'):
             logger.info('reporting intermission')
             await self._report_intermission(game['period'])
 
