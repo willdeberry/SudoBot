@@ -102,9 +102,14 @@ class HockeyUpdates:
         await self.sports_channel.send(embed = embed)
 
     async def _report_game_start(self):
-        tbl_emoji = self._find_emoji_in_guild('tbl')
+        data = self.hockey_game.get_game_data()
+        home_scratches = ', '.join(data['home']['scratches'])
+        away_scratches = ', '.join(data['away']['scratches'])
 
-        fields = [{'name': f'{tbl_emoji}', 'value': 'Time to tune in!'}]
+        fields = [
+                {'name': f"data['home']['name'] Scratches", 'value': f'{home_scratches}'},
+                {'name': f"data['away']['name'] Scratches", 'value': f'{away_scratches}'}
+            ]
         embed = build_embed('Game Start', fields, inline = False)
 
         await self.sports_channel.send(embed = embed)

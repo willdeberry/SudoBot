@@ -23,6 +23,7 @@ class HockeyGame:
                 'id': None,
                 'name': None,
                 'score': None,
+                'scratches': [],
                 'sog': None,
                 'record': None
             },
@@ -35,6 +36,7 @@ class HockeyGame:
                 'id': None,
                 'name': None,
                 'score': None,
+                'scratches': [],
                 'sog': None,
                 'record': None
             },
@@ -59,6 +61,7 @@ class HockeyGame:
             self._reset_game_data()
             return self.status
         except:
+            logger.error('Index Error')
             sleep(10)
 
         game_status = game['status']['detailedState']
@@ -76,7 +79,7 @@ class HockeyGame:
                     return self._report_intermission(current_period, home_team, away_team)
 
                 self.status['intermission'] = False
-                return self._report_in_progress(home_team, away_team)
+                return self._report_in_progress(game['link'], home_team, away_team)
             case 'Game Over' | 'Final':
                 home_team = game['linescore']['teams']['home']
                 away_team = game['linescore']['teams']['away']
@@ -142,6 +145,15 @@ class HockeyGame:
 
         return self.game_data
 
+    def _get_scratches(self, scratches):
+        players = []
+
+        for scratch in scratches:
+            player_info = requests.get(f'{self._base_url}/api/v1/people/{scratch}').json()
+            players.append(player_info['people'][0]['fullName'])
+
+        return players
+
     def _get_team_name(self, data):
         api = data['team']['link']
         url = f'{self._base_url}/{api}'
@@ -174,8 +186,9 @@ class HockeyGame:
 
         return self.status
 
-    def _report_in_progress(self, home_team, away_team):
-        logger.info('Game currently in progress')
+    def _report_in_progress(self, api, home_team, away_team):
+        self.game_data['home']['name'] = self._get_team_name(home_team)
+        self.game_data['away']['name'] = self._get_team_name(away_team)
 
         if not self.status['start']:
             logger.warning('Scoreboard initialized')
@@ -184,14 +197,19 @@ class HockeyGame:
             self.game_data['home']['score'] = home_team['goals']
             self.game_data['away']['score'] = away_team['goals']
 
+            data = requests.get(f'{self._base_url}{api}').json()
+            teams_data = data['liveData']['boxscore']['teams']
+            home_scratches = teams_data['home']['scratches']
+            away_scratches = teams_data['away']['scratches']
+
+            self.game_data['home']['scratches'] = self._get_scratches(home_scratches)
+            self.game_data['away']['scratches'] = self._get_scratches(away_scratches)
+
         if home_team['goals'] != self.game_data['home']['score'] or away_team['goals'] != self.game_data['away']['score']:
             logger.info('goal scored!!')
             self.status['goal'] = True
             self.game_data['home']['score'] = home_team['goals']
             self.game_data['away']['score'] = away_team['goals']
-
-            self.game_data['home']['name'] = self._get_team_name(home_team)
-            self.game_data['away']['name'] = self._get_team_name(away_team)
 
         return self.status
 
