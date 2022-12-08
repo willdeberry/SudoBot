@@ -103,12 +103,14 @@ class HockeyUpdates:
 
     async def _report_game_start(self):
         data = self.hockey_game.get_game_data()
+        home_record = data['home']['record']
         home_scratches = ', '.join(data['home']['scratches'])
+        away_record = data['away']['record']
         away_scratches = ', '.join(data['away']['scratches'])
 
         fields = [
-                {'name': f"data['home']['name'] Scratches", 'value': f'{home_scratches}'},
-                {'name': f"data['away']['name'] Scratches", 'value': f'{away_scratches}'}
+                {'name': f"{data['home']['name']} (home_record)", 'value': f'Scratches: {home_scratches}'},
+                {'name': f"{data['away']['name']} (away_record)", 'value': f'Scratches: {away_scratches}'}
             ]
         embed = build_embed('Game Start', fields, inline = False)
 
