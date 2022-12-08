@@ -11,8 +11,9 @@ class HockeyUpdates:
     hockey_game = HockeyGame()
     game_status = {}
 
-    def __init__(self, guild, sports_channel):
+    def __init__(self, guild, general_channel, sports_channel):
         self.guild = guild
+        self.general_channel = general_channel
         self.sports_channel = sports_channel
 
     @tasks.loop(seconds = 5)
@@ -99,7 +100,7 @@ class HockeyUpdates:
 
         embed = build_embed(f'{goal_emoji} Today is Gameday! {goal_emoji}', fields, inline = False)
 
-        await self.sports_channel.send(embed = embed)
+        await self.general_channel.send(embed = embed)
 
     async def _report_game_start(self):
         data = self.hockey_game.get_game_data()

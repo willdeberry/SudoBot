@@ -29,9 +29,10 @@ class SudoBot(discord.Client):
 
     async def on_ready(self):
         logger.info(f'Bot logged in as {self.user}')
+        general_channel = await self.fetch_channel(os.environ.get('GENERAL_CHANNEL'))
         sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
         guild = self.get_guild(int(os.environ.get('GUILD_ID')))
-        hockey_updates = HockeyUpdates(guild, sports_channel)
+        hockey_updates = HockeyUpdates(guild, general_channel, sports_channel)
         hockey_updates.check_score.start()
 
     async def on_message(self, message):
