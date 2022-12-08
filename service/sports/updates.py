@@ -98,7 +98,7 @@ class HockeyUpdates:
                 {'name': 'Streams', 'value': '[CastStreams](https://www.caststreams.com/), [CrackStreams](http://crackstreams.biz/nhlstreams/)', 'inline': True}
             ]
 
-        embed = build_embed(f'{goal_emoji} Today is Gameday! {goal_emoji}', fields, inline = False)
+        embed = build_embed(f'{goal_emoji} Today is Gameday! {goal_emoji}', fields)
 
         await self.general_channel.send(embed = embed)
 
@@ -113,7 +113,7 @@ class HockeyUpdates:
                 {'name': f"{data['home']['name']} (home_record)", 'value': f'Scratches: {home_scratches}'},
                 {'name': f"{data['away']['name']} (away_record)", 'value': f'Scratches: {away_scratches}'}
             ]
-        embed = build_embed('Game Start', fields, inline = False)
+        embed = build_embed('Game Start', fields)
 
         await self.sports_channel.send(embed = embed)
 
