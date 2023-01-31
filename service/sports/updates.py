@@ -110,8 +110,8 @@ class HockeyUpdates:
         away_scratches = ', '.join(data['away']['scratches'])
 
         fields = [
-                {'name': f"{data['home']['name']} (home_record)", 'value': f'Scratches: {home_scratches}'},
-                {'name': f"{data['away']['name']} (away_record)", 'value': f'Scratches: {away_scratches}'}
+                {'name': f"{data['home']['name']} ({home_record})", 'value': f'Scratches: {home_scratches}'},
+                {'name': f"{data['away']['name']} ({away_record})", 'value': f'Scratches: {away_scratches}'}
             ]
         embed = build_embed('Game Start', fields)
 
