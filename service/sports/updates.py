@@ -16,7 +16,7 @@ class HockeyUpdates:
         self.general_channel = general_channel
         self.sports_channel = sports_channel
 
-    @tasks.loop(seconds = 5)
+    @tasks.loop(seconds = 15)
     async def check_score(self):
         game = self.hockey_game.did_score()
 
