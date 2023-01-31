@@ -1,16 +1,33 @@
 
 from datetime import datetime
 import dateutil.parser
+import json
 import pytz
+import redis
 import requests
 from time import sleep
 
 from utilities.logger import logger
 
+def save_state(method):
+    def decorated_method(self, *args, **kwargs):
+        result = method(self, *args, **kwargs)
+        status = json.dumps(self.status)
+        game_data = json.dumps(self.game_data)
+
+        self._db.set('status', status)
+        self._db.set('game_data', game_data)
+
+        return result
+
+    return decorated_method
+
+
 
 class HockeyGame:
     _initialized = False
     _base_url = 'https://statsapi.web.nhl.com'
+    _db = redis.Redis(host='redis', port=6379, decode_responses=True)
     status = {
             'end': False,
             'goal': False,
@@ -28,10 +45,6 @@ class HockeyGame:
                 'record': None
             },
             'broadcasts': ['N/A'],
-            'goalies': {
-                'winning': None,
-                'losing': None
-            },
             'home': {
                 'id': None,
                 'name': None,
@@ -41,11 +54,20 @@ class HockeyGame:
                 'record': None
             },
             'period': None,
-            'stars': [],
             'time': None,
             'venue': None
         }
 
+    def __init__(self):
+        if self._db.exists('status'):
+            logger.info('Restoring status')
+            self.status = json.loads(self._db.get('status'))
+
+        if self._db.exists('game_data'):
+            logger.info('Restoring game data')
+            self.gate_data = json.loads(self._db.get('game_data'))
+
+    @save_state
     def did_score(self):
         self.status['goal'] = False
 
@@ -58,11 +80,10 @@ class HockeyGame:
         try:
             game = data['dates'][0]['games'][0]
         except IndexError:
-            self._reset_game_data()
             return self.status
-        except:
-            logger.error('Index Error')
-            sleep(10)
+        except Exception as e:
+            logger.error(f'Error: {e}')
+            return self.status
 
         game_status = game['status']['detailedState']
 
@@ -171,12 +192,6 @@ class HockeyGame:
         self.status['start'] = False
         self.status['end'] = True
 
-        results = data['liveData']['decisions']
-       # self.game_data['goalies']['winning'] = results['winner']['fullName']
-       # self.game_data['goalies']['losing'] = results['loser']['fullName']
-       # self.game_data['stars'].append(results['firstStar']['fullName'])
-       # self.game_data['stars'].append(results['secondStar']['fullName'])
-       # self.game_data['stars'].append(results['thirdStar']['fullName'])
         self.game_data['home']['name'] = self._get_team_name(home_team)
         self.game_data['home']['score'] = home_team['goals']
         self.game_data['home']['sog'] = home_team['shotsOnGoal']

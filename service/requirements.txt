@@ -2,4 +2,5 @@ discord
 python-dateutil
 python-dotenv
 pytz
+redis
 requests
