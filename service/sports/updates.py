@@ -72,7 +72,7 @@ class HockeyUpdates:
                 ]
         embed = build_embed('Game End', fields)
 
-        await self.sports_channel.send(embed = embed)
+        await self._send_to_channel(self.sports_channel, embed = embed)
 
     async def _report_score(self):
         data = self.hockey_game.get_game_data()
@@ -115,7 +115,7 @@ class HockeyUpdates:
             ]
         embed = build_embed('Game Start', fields)
 
-        await self.sports_channel.send(embed = embed)
+        await self._send_to_channel(self.sports_channel, embed = embed)
 
     async def _report_intermission(self, period):
         data = self.hockey_game.get_game_data()
@@ -132,4 +132,13 @@ class HockeyUpdates:
                 ]
         embed = build_embed(f'End of {period} period', fields)
 
-        await self.sports_channel.send(embed = embed)
+        await self._send_to_channel(self.sports_channel, embed = embed)
+
+    async def _send_to_channel(self, channel, content = False, embed = False):
+        if content:
+            await channel.send(content = content)
+            return
+
+        if embed:
+            await channel.send(embed = embed)
+            return
