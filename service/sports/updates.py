@@ -30,7 +30,7 @@ class HockeyUpdates:
     async def check_score(self):
         game = self.hockey_game.did_score()
 
-        if game['end'] and not self.game_status.get('end'):
+        if game['end'] and not self.game_status.get('end') and self.game_status.get('start'):
             logger.info('reporting end of game')
             await self._report_end()
 
