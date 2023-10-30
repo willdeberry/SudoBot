@@ -1,6 +1,8 @@
 
 import discord
 from discord.ext import tasks
+import json
+import redis
 
 from sports.hockey_game import HockeyGame
 from utilities.helpers import build_embed
@@ -10,11 +12,19 @@ from utilities.logger import logger
 class HockeyUpdates:
     hockey_game = HockeyGame()
     game_status = {}
+    _db = redis.Redis(host='redis', port=6379, decode_responses=True)
+    db_entries = ['report_game_scheduled', 'report_game_start', 'report_game_end']
 
     def __init__(self, guild, general_channel, sports_channel):
         self.guild = guild
         self.general_channel = general_channel
         self.sports_channel = sports_channel
+
+        for db_entry in self.db_entries:
+            if self._db.exists(db_entry):
+                continue
+
+            self._db.set(db_entry, 0)
 
     @tasks.loop(seconds = 15)
     async def check_score(self):
@@ -51,6 +61,10 @@ class HockeyUpdates:
             return emoji
 
     async def _report_end(self):
+        # If the value is 1 (True), then we don't need to report the game ended again.
+        if int(self._db.get('report_game_end')) == 1:
+            return
+
         data = self.hockey_game.get_game_data()
         home = data['home']
         away = data['away']
@@ -73,6 +87,7 @@ class HockeyUpdates:
         embed = build_embed('Game End', fields)
 
         await self._send_to_channel(self.sports_channel, embed = embed)
+        self.update_reporting_db('end')
 
     async def _report_score(self):
         data = self.hockey_game.get_game_data()
@@ -80,10 +95,15 @@ class HockeyUpdates:
         away = data['away']
         content = f"Goal Scored: {home['name']} {home['score']} - {away['score']} {away['name']}"
 
-        await self.sports_channel.send(content = content)
+        await self._send_to_channel(self.sports_channel, content = content)
 
     async def _report_game_scheduled(self):
+        # If the value is 1 (True), then we don't need to report the game scheduled again.
+        if int(self._db.get('report_game_scheduled')) == 1:
+            return
+
         data = self.hockey_game.get_game_data()
+        print(json.dumps(data))
         home_name = data['home']['name']
         home_record = data['home']['record']
         away_name = data['away']['name']
@@ -100,10 +120,16 @@ class HockeyUpdates:
 
         embed = build_embed(f'{goal_emoji} Today is Gameday! {goal_emoji}', fields)
 
-        await self.general_channel.send(embed = embed)
+        await self._send_to_channel(self.general_channel, embed = embed)
+        self.update_reporting_db('scheduled')
 
     async def _report_game_start(self):
+        # If the value is 1 (True), then we don't need to report the game started again.
+        if int(self._db.get('report_game_start')) == 1:
+            return
+
         data = self.hockey_game.get_game_data()
+        print(json.dumps(data))
         home_record = data['home']['record']
         home_scratches = ', '.join(data['home']['scratches'])
         away_record = data['away']['record']
@@ -116,6 +142,7 @@ class HockeyUpdates:
         embed = build_embed('Game Start', fields)
 
         await self._send_to_channel(self.sports_channel, embed = embed)
+        self.update_reporting_db('start')
 
     async def _report_intermission(self, period):
         data = self.hockey_game.get_game_data()
@@ -142,3 +169,18 @@ class HockeyUpdates:
         if embed:
             await channel.send(embed = embed)
             return
+
+    def update_reporting_db(self, event):
+        match event:
+            case 'scheduled':
+                self._db.set('report_game_end', 0)
+                self._db.set('report_game_scheduled', 1)
+                self._db.set('report_game_start', 0)
+            case 'start':
+                self._db.set('report_game_end', 0)
+                self._db.set('report_game_scheduled', 0)
+                self._db.set('report_game_start', 1)
+            case 'end':
+                self._db.set('report_game_end', 1)
+                self._db.set('report_game_scheduled', 0)
+                self._db.set('report_game_start', 0)

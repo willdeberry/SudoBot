@@ -114,7 +114,7 @@ class HockeyGame:
                 return self.status
 
     def get_game_data(self):
-        return self.game_data
+        return json.loads(self._db.get('game_data'))
 
     def tbl_next_game(self):
         data = requests.get(f'{self._base_url}/api/v1/teams/14?expand=team.schedule.next&expand=schedule.broadcasts').json()
@@ -143,7 +143,7 @@ class HockeyGame:
                 'time': game_time_est.strftime('%D %H:%M'),
                 'venue': next_game['venue']['name'],
                 'versus': versus,
-                }
+            }
 
         return next_game
 
@@ -156,7 +156,7 @@ class HockeyGame:
                 'ot': stats['ot'],
                 'points': stats['pts'],
                 'wins': stats['wins'],
-                }
+            }
 
         return record
 
@@ -167,12 +167,14 @@ class HockeyGame:
         return self.game_data
 
     def _get_scratches(self, scratches):
+        logger.info('Gathering the list of scratches')
         players = []
 
         for scratch in scratches:
             player_info = requests.get(f'{self._base_url}/api/v1/people/{scratch}').json()
             players.append(player_info['people'][0]['fullName'])
 
+        print(players)
         return players
 
     def _get_team_name(self, data):
@@ -270,6 +272,7 @@ class HockeyGame:
         return self.status
 
     def _reset_game_data(self):
+        logger.info('Resetting data')
         self._process_dict(self.status)
         self._process_dict(self.game_data)
 
