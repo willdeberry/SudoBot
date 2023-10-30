@@ -45,13 +45,13 @@ class SudoBot(discord.Client):
         if message.channel.name in read_only_channels:
             await self._handle_readonly(message)
 
-        match message.content.lower():
-            case 'weed':
-                weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
-                await message.add_reaction(weed_emoji)
-            case 'jeep':
-                jeep_emoji = discord.utils.get(message.guild.emojis, name='rubberduck')
-                await message.add_reaction(jeep_emoji)
+        if 'weed' in message.content.lower():
+            weed_emoji = discord.utils.get(message.guild.emojis, name='weed')
+            await message.add_reaction(weed_emoji)
+
+        if 'jeep' in message.content.lower():
+            jeep_emoji = discord.utils.get(message.guild.emojis, name='rubberduck')
+            await message.add_reaction(jeep_emoji)
 
     async def _handle_readonly(self, message):
         allowed_posters = ['Plex#0000', 'transmission#0000', 'UptimeRobot#0000']
