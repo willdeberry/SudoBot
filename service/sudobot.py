@@ -53,6 +53,10 @@ class SudoBot(discord.Client):
             jeep_emoji = discord.utils.get(message.guild.emojis, name='rubberduck')
             await message.add_reaction(jeep_emoji)
 
+        if 'https://x.com' in message.content:
+            new_message = message.content.replace('x.com', 'fixupx.com')
+            await message.reply(content = new_message)
+
     async def _handle_readonly(self, message):
         allowed_posters = ['Plex#0000', 'transmission#0000', 'UptimeRobot#0000']
 
