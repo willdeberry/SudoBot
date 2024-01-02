@@ -37,7 +37,7 @@ class HockeyUpdates:
                 await self._report_score()
             case 'intermission':
                 logging.info('reporting intermission')
-                await self._report_intermission(game['period'])
+                await self._report_intermission()
             case 'end':
                 logging.info('reporting end of game')
                 await self._report_end()
@@ -139,8 +139,9 @@ class HockeyUpdates:
         await self._send_to_channel(self.sports_channel, embed = embed)
         self._update_reporting_db('start')
 
-    async def _report_intermission(self, period):
-        data = self.hockey_game.get_game_data()
+    async def _report_intermission(self):
+        data = self.hockey_game.get_intermission_data()
+        period = data['period']
         home_name = data['home']['name']
         home_score = data['home']['score']
         home_sog = data['home']['sog']

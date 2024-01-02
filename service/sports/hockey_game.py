@@ -28,6 +28,9 @@ class HockeyGame:
         if self.goal():
             self.poll_status = 'goal'
 
+        if self.intermission():
+            self.poll_status = 'intermission'
+
         return self.poll_status
 
     def scheduled(self):
@@ -109,6 +112,19 @@ class HockeyGame:
 
         return False
 
+    def intermission(self):
+        try:
+            if self.db.get('status') == 'intermission':
+                return True
+        except TypeError:
+            pass
+
+        game_id = json.loads(self.db.get('schedule_game'))['id']
+        self._fetch_boxscore(game_id)
+        boxscore = json.loads(self.db.get('boxscore'))
+
+        return boxscore['clock']['inIntermission']
+
     def get_scheduled_data(self):
         data = {}
         data['home'] = {}
@@ -161,6 +177,28 @@ class HockeyGame:
         data['home']['score'] = self.db.get('home_goals')
         data['away']['score'] = self.db.get('away_goals')
         data['time_left'] = boxscore['clock']['timeRemaining']
+
+        return data
+
+    def get_intermission_data(self):
+        data = {}
+        data['home'] = {}
+        data['away'] = {}
+
+        boxscore = json.loads(self.db.get('boxscore'))
+        home_stats = boxscore['homeTeam']
+        away_stats = boxscore['awayTeam']
+        period = boxscore['period']
+
+        if boxscore['period'] > 3:
+            period = 'OT'
+
+        data['home']['name'] = home_stats['abbrev']
+        data['home']['score'] = home_stats['score']
+        data['home']['sog'] = home_stats['sog']
+        data['away']['name'] = away_stats['abbrev']
+        data['away']['score'] = away_stats['score']
+        data['away']['sog'] = away_stats['sog']
 
         return data
 
