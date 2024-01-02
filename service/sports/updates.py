@@ -58,7 +58,7 @@ class HockeyUpdates:
         if int(self._db.get('report_game_end')) == 1:
             return
 
-        data = self.hockey_game.get_game_data()
+        data = self.hockey_game.get_game_end_data()
         home = data['home']
         away = data['away']
 
@@ -70,7 +70,7 @@ class HockeyUpdates:
         fields = [
                 {'name': home['name'], 'value': f'{home_score} ({home_sog} sog)'},
                 {'name': away['name'], 'value': f'{away_score} ({away_sog} sog)'}
-                ]
+            ]
         embed = build_embed('Game End', fields)
 
         await self._send_to_channel(self.sports_channel, embed = embed)
