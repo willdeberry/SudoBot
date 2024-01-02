@@ -24,23 +24,23 @@ class HockeyUpdates:
     @tasks.loop(seconds = 15)
     async def check_score(self):
         game = self.hockey_game.poll()
-        logging.warning(f'game: {json.dumps(game)}')
+        logging.warning(f'game status: {game}')
 
-        match game['status']:
+        match game:
             case 'scheduled':
                 logging.info('reporting game scheduled')
                 await self._report_game_scheduled()
-            case 'end':
-                logging.info('reporting end of game')
-                await self._report_end()
             case 'start':
                 logging.info('reporting game start')
                 await self._report_game_start()
+            case 'inprogress':
+                await self._report_score()
             case 'intermission':
                 logging.info('reporting intermission')
                 await self._report_intermission(game['period'])
-            case 'inprogress':
-                await self._report_score()
+            case 'end':
+                logging.info('reporting end of game')
+                await self._report_end()
             case _:
                 self._update_reporting_db('reset')
 
@@ -91,7 +91,7 @@ class HockeyUpdates:
 
         data = self.hockey_game.get_scheduled_data()
 
-        logging.debug(f'data: {json.dumps(data)}')
+        logging.debug(f'scheduled data: {json.dumps(data)}')
 
         home_name = data['home']['name']
         home_record = data['home']['record']
@@ -117,8 +117,10 @@ class HockeyUpdates:
         if int(self._db.get('report_game_start')) == 1:
             return
 
-        data = self.hockey_game.get_game_data()
-        print(json.dumps(data))
+        data = self.hockey_game.get_start_data()
+
+        logging.debug(f'start data: {json.dumps(data)}')
+
         home_record = data['home']['record']
         home_scratches = ', '.join(data['home']['scratches'])
         away_record = data['away']['record']

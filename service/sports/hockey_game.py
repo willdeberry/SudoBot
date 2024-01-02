@@ -12,15 +12,18 @@ class HockeyGame:
         self.client = NHLClient()
         self.db = redis.Redis(host='redis', port=6379, decode_responses=True)
 
-        self.poll_status = {
-                'status': None,
-            }
+        self.poll_status = None
 
         self.db.delete('status')
 
     def poll(self):
+        self.poll_status = None
+
         if self.scheduled():
-            self.poll_status['status'] = 'scheduled'
+            self.poll_status = 'scheduled'
+
+        if self.start():
+            self.poll_status = 'start'
 
         return self.poll_status
 
@@ -58,6 +61,22 @@ class HockeyGame:
         self.db.set('schedule_today', 0)
         return False
 
+    def start(self):
+        try:
+            if self.db.get('status') == 'start':
+                return True
+        except TypeError:
+            pass
+
+        game_id = json.loads(self.db.get('schedule_game'))['id']
+        self._fetch_boxscore(game_id)
+        game_state = json.loads(self.db.get('boxscore'))['gameState']
+
+        if game_state != 'OK':
+            return False
+
+        return True
+
     def get_scheduled_data(self):
         data = {}
         data['home'] = {}
@@ -76,25 +95,25 @@ class HockeyGame:
         data['home']['record'] = records['home']
         data['away']['record'] = records['away']
 
-        self._fetch_standings()
-        standings = json.loads(self.db.get('standings'))
+        return data
 
-        for team in standings:
-            team_abbrev = team['teamAbbrev']['default']
+    def get_start_data(self):
+        data = {}
+        data['home'] = {}
+        data['away'] = {}
 
-            if team_abbrev == data['home']['name']:
-                hwins = team['wins']
-                hloss = team['losses']
-                hot = team['otLosses']
+        boxscore = json.loads(self.db.get('boxscore'))
+        records = self._get_records(boxscore['homeTeam']['abbrev'], boxscore['awayTeam']['abbrev'])
+        game_info = boxscore['boxscore']['gameInfo']['homeTeam']['scratches']
+        home_scratches = game_info['homeTeam']['scratches']
+        away_scratches = game_info['awayTeam']['scratches']
 
-                data['home']['record'] = f'{hwins}-{hloss}-{hot}'
-
-            if team_abbrev == data['away']['name']:
-                awins = team['wins']
-                aloss = team['losses']
-                aot = team['otLosses']
-
-                data['away']['record'] = f'{awins}-{aloss}-{aot}'
+        data['home']['name'] = boxscore['homeTeam']['abbrev']
+        data['away']['name'] = boxscore['awayTeam']['abbrev']
+        data['home']['record'] = records['home']
+        data['away']['record'] = records['away']
+        data['home']['scratches'] = [player['lastName']['default'] for player in home_scratches]
+        data['away']['scratches'] = [player['lastName']['default'] for player in away_scratches]
 
         return data
 
@@ -108,3 +127,31 @@ class HockeyGame:
     def _fetch_standings(self):
         standings = self.client.standings.get_standings()['standings']
         self.db.set('standings', json.dumps(standings))
+
+    def _fetch_boxscore(self, game_id):
+        boxscore = self.client.game_center.boxscore(game_id = game_id)
+        self.db.set('boxscore', json.dumps(boxscore))
+
+    def _get_records(self, home_name, away_name):
+        data = {}
+        self._fetch_standings()
+        standings = json.loads(self.db.get('standings'))
+
+        for team in standings:
+            team_abbrev = team['teamAbbrev']['default']
+
+            if team_abbrev == home_name:
+                hwins = team['wins']
+                hloss = team['losses']
+                hot = team['otLosses']
+
+                data['home'] = f'{hwins}-{hloss}-{hot}'
+
+            if team_abbrev == away_name:
+                awins = team['wins']
+                aloss = team['losses']
+                aot = team['otLosses']
+
+                data['away'] = f'{awins}-{aloss}-{aot}'
+
+        return data
