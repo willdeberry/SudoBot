@@ -25,6 +25,9 @@ class HockeyGame:
         if self.start():
             self.poll_status = 'start'
 
+        if self.goal():
+            self.poll_status = 'goal'
+
         return self.poll_status
 
     def scheduled(self):
@@ -77,6 +80,35 @@ class HockeyGame:
 
         return True
 
+    def goal(self):
+        cur_home_goals = 0
+        cur_away_goals = 0
+        game_id = json.loads(self.db.get('schedule_game'))['id']
+        self._fetch_boxscore(game_id)
+        boxscore = json.loads(self.db.get('boxscore'))
+        game_state = boxscore['gameState']
+
+        if game_state != 'OK':
+            return False
+
+        if self.db.exists('home_goals'):
+            home_goals = self.db.get('home_goals')
+
+        if self.db.exists('away_goals'):
+            away_goals = self.db.get('away_goals')
+
+        total_goals = boxscore['linescore']['totals']
+        home_goals = total_goals['home']
+        away_goals = total_goals['away']
+
+        if home_goals != cur_home_goals or away_goals != cur_away_goals:
+            self.db.set('home_goals', home_goals)
+            self.db.set('away_goals', away_goals)
+
+            return True
+
+        return False
+
     def get_scheduled_data(self):
         data = {}
         data['home'] = {}
@@ -114,6 +146,21 @@ class HockeyGame:
         data['away']['record'] = records['away']
         data['home']['scratches'] = [player['lastName']['default'] for player in home_scratches]
         data['away']['scratches'] = [player['lastName']['default'] for player in away_scratches]
+
+        return data
+
+    def get_goal_data(self):
+        data = {}
+        data['home'] = {}
+        data['away'] = {}
+
+        boxscore = json.loads(self.db.get('boxscore'))
+
+        data['home']['name'] = boxscore['homeTeam']['abbrev']
+        data['away']['name'] = boxscore['awayTeam']['abbrev']
+        data['home']['score'] = self.db.get('home_goals')
+        data['away']['score'] = self.db.get('away_goals')
+        data['time_left'] = boxscore['clock']['timeRemaining']
 
         return data
 

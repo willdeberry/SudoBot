@@ -33,7 +33,7 @@ class HockeyUpdates:
             case 'start':
                 logging.info('reporting game start')
                 await self._report_game_start()
-            case 'inprogress':
+            case 'goal':
                 await self._report_score()
             case 'intermission':
                 logging.info('reporting intermission')
@@ -77,10 +77,14 @@ class HockeyUpdates:
         self._update_reporting_db('end')
 
     async def _report_score(self):
-        data = self.hockey_game.get_game_data()
-        home = data['home']
-        away = data['away']
-        content = f"Goal Scored: {home['name']} {home['score']} - {away['score']} {away['name']}"
+        data = self.hockey_game.get_goal_data()
+        home_name = data['home']['name']
+        home_sore = data['home']['score']
+        away_name = data['away']['name']
+        away_sore = data['away']['score']
+        time_remaining = data['time_remaining']
+
+        content = f"Goal Scored: {home_name} {home_score} - {away_score} {away_name} w/ {time_remaining} left"
 
         await self._send_to_channel(self.sports_channel, content = content)
 
