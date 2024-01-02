@@ -2,54 +2,47 @@
 import discord
 from discord.ext import tasks
 import json
+import logging
 import redis
 
 from sports.hockey_game import HockeyGame
 from utilities.helpers import build_embed
-from utilities.logger import logger
+
+
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.DEBUG)
 
 
 class HockeyUpdates:
     hockey_game = HockeyGame()
-    game_status = {}
-    _db = redis.Redis(host='redis', port=6379, decode_responses=True)
-    db_entries = ['report_game_scheduled', 'report_game_start', 'report_game_end']
 
     def __init__(self, guild, general_channel, sports_channel):
         self.guild = guild
         self.general_channel = general_channel
         self.sports_channel = sports_channel
-
-        for db_entry in self.db_entries:
-            if self._db.exists(db_entry):
-                continue
-
-            self._db.set(db_entry, 0)
+        self._db = redis.Redis(host='redis', port=6379, decode_responses=True)
 
     @tasks.loop(seconds = 15)
     async def check_score(self):
-        game = self.hockey_game.did_score()
+        game = self.hockey_game.poll()
+        logging.warning(f'game: {json.dumps(game)}')
 
-        if game['end'] and not self.game_status.get('end') and self.game_status.get('start'):
-            logger.info('reporting end of game')
-            await self._report_end()
-
-        if game['scheduled'] and not self.game_status.get('scheduled'):
-            logger.info('reporting game scheduled')
-            await self._report_game_scheduled()
-
-        if game['start'] and not self.game_status.get('start'):
-            logger.info('reporting game start')
-            await self._report_game_start()
-
-        if game['intermission'] and not self.game_status.get('intermission'):
-            logger.info('reporting intermission')
-            await self._report_intermission(game['period'])
-
-        if game['goal']:
-            await self._report_score()
-
-        self.game_status = game.copy()
+        match game['status']:
+            case 'scheduled':
+                logging.info('reporting game scheduled')
+                await self._report_game_scheduled()
+            case 'end':
+                logging.info('reporting end of game')
+                await self._report_end()
+            case 'start':
+                logging.info('reporting game start')
+                await self._report_game_start()
+            case 'intermission':
+                logging.info('reporting intermission')
+                await self._report_intermission(game['period'])
+            case 'inprogress':
+                await self._report_score()
+            case _:
+                self._update_reporting_db('reset')
 
     def _find_emoji_in_guild(self, name):
         emojis = self.guild.emojis
@@ -73,21 +66,15 @@ class HockeyUpdates:
         home_sog = home['sog']
         away_score = away['score']
         away_sog = away['sog']
-        #stars = ', '.join(data['stars'])
-        #winning_goalie = data['goalies']['winning']
-        #losing_goalie = data['goalies']['losing']
 
         fields = [
                 {'name': home['name'], 'value': f'{home_score} ({home_sog} sog)'},
-                {'name': away['name'], 'value': f'{away_score} ({away_sog} sog)'},
-                #{'name': 'Winning Goalie', 'value': winning_goalie},
-                #{'name': 'Losing Goalie', 'value': losing_goalie},
-                #{'name': '3 Stars', 'value': stars}
+                {'name': away['name'], 'value': f'{away_score} ({away_sog} sog)'}
                 ]
         embed = build_embed('Game End', fields)
 
         await self._send_to_channel(self.sports_channel, embed = embed)
-        self.update_reporting_db('end')
+        self._update_reporting_db('end')
 
     async def _report_score(self):
         data = self.hockey_game.get_game_data()
@@ -102,8 +89,10 @@ class HockeyUpdates:
         if int(self._db.get('report_game_scheduled')) == 1:
             return
 
-        data = self.hockey_game.get_game_data()
-        print(json.dumps(data))
+        data = self.hockey_game.get_scheduled_data()
+
+        logging.debug(f'data: {json.dumps(data)}')
+
         home_name = data['home']['name']
         home_record = data['home']['record']
         away_name = data['away']['name']
@@ -121,7 +110,7 @@ class HockeyUpdates:
         embed = build_embed(f'{goal_emoji} Today is Gameday! {goal_emoji}', fields)
 
         await self._send_to_channel(self.general_channel, embed = embed)
-        self.update_reporting_db('scheduled')
+        self._update_reporting_db('scheduled')
 
     async def _report_game_start(self):
         # If the value is 1 (True), then we don't need to report the game started again.
@@ -142,7 +131,7 @@ class HockeyUpdates:
         embed = build_embed('Game Start', fields)
 
         await self._send_to_channel(self.sports_channel, embed = embed)
-        self.update_reporting_db('start')
+        self._update_reporting_db('start')
 
     async def _report_intermission(self, period):
         data = self.hockey_game.get_game_data()
@@ -156,7 +145,7 @@ class HockeyUpdates:
         fields = [
                 {'name': home_name, 'value': f'{home_score} ({home_sog} sog)'},
                 {'name': away_name, 'value': f'{away_score} ({away_sog} sog)'}
-                ]
+            ]
         embed = build_embed(f'End of {period} period', fields)
 
         await self._send_to_channel(self.sports_channel, embed = embed)
@@ -170,7 +159,7 @@ class HockeyUpdates:
             await channel.send(embed = embed)
             return
 
-    def update_reporting_db(self, event):
+    def _update_reporting_db(self, event):
         match event:
             case 'scheduled':
                 self._db.set('report_game_end', 0)
@@ -178,9 +167,13 @@ class HockeyUpdates:
                 self._db.set('report_game_start', 0)
             case 'start':
                 self._db.set('report_game_end', 0)
-                self._db.set('report_game_scheduled', 0)
+                self._db.set('report_game_scheduled', 1)
                 self._db.set('report_game_start', 1)
             case 'end':
                 self._db.set('report_game_end', 1)
+                self._db.set('report_game_scheduled', 1)
+                self._db.set('report_game_start', 1)
+            case 'reset':
+                self._db.set('report_game_end', 0)
                 self._db.set('report_game_scheduled', 0)
                 self._db.set('report_game_start', 0)

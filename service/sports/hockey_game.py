@@ -1,285 +1,110 @@
 
-from datetime import datetime
+from datetime import date, datetime, timedelta
 import dateutil.parser
 import json
+from nhlpy import NHLClient
 import pytz
 import redis
-import requests
-from time import sleep
-
-from utilities.logger import logger
-
-def save_state(method):
-    def decorated_method(self, *args, **kwargs):
-        result = method(self, *args, **kwargs)
-        status = json.dumps(self.status)
-        game_data = json.dumps(self.game_data)
-
-        self._db.set('status', status)
-        self._db.set('game_data', game_data)
-
-        return result
-
-    return decorated_method
-
 
 
 class HockeyGame:
-    _initialized = False
-    _base_url = 'https://statsapi.web.nhl.com'
-    _db = redis.Redis(host='redis', port=6379, decode_responses=True)
-    status = {
-            'end': False,
-            'goal': False,
-            'intermission': False,
-            'scheduled': False,
-            'start': False
-        }
-    game_data = {
-            'away': {
-                'id': None,
-                'name': None,
-                'score': None,
-                'scratches': [],
-                'sog': None,
-                'record': None
-            },
-            'broadcasts': ['N/A'],
-            'home': {
-                'id': None,
-                'name': None,
-                'score': None,
-                'scratches': [],
-                'sog': None,
-                'record': None
-            },
-            'period': None,
-            'time': None,
-            'venue': None
-        }
-
     def __init__(self):
-        if self._db.exists('status'):
-            logger.info('Restoring status')
-            self.status = json.loads(self._db.get('status'))
+        self.client = NHLClient()
+        self.db = redis.Redis(host='redis', port=6379, decode_responses=True)
 
-        if self._db.exists('game_data'):
-            logger.info('Restoring game data')
-            self.gate_data = json.loads(self._db.get('game_data'))
-
-    @save_state
-    def did_score(self):
-        self.status['goal'] = False
-
-        try:
-            data = requests.get(f'{self._base_url}/api/v1/schedule?&expand=schedule.broadcasts&expand=schedule.linescore&teamId=14').json()
-        except requests.exceptions.ConnectionError:
-            logger.error('Connection Error')
-            return self.status
-
-        try:
-            game = data['dates'][0]['games'][0]
-        except IndexError:
-            return self.status
-        except Exception as e:
-            logger.error(f'Error: {e}')
-            return self.status
-
-        game_status = game['status']['detailedState']
-
-        match game_status:
-            case 'Scheduled':
-                return self._report_scheduled(game)
-            case 'In Progress' | 'In Progress - Critical':
-                home_team = game['linescore']['teams']['home']
-                away_team = game['linescore']['teams']['away']
-                current_period = game['linescore']['currentPeriodOrdinal']
-                intermission = True if game['linescore']['currentPeriodTimeRemaining'] == 'END' else False
-
-                if intermission:
-                    return self._report_intermission(current_period, home_team, away_team)
-
-                self.status['intermission'] = False
-                return self._report_in_progress(game['link'], home_team, away_team)
-            case 'Game Over' | 'Final':
-                home_team = game['linescore']['teams']['home']
-                away_team = game['linescore']['teams']['away']
-                return self._report_end(game['link'], home_team, away_team)
-            case _:
-                if not self._initialized:
-                    logger.info('No game scheduled')
-
-                self._initialized = True
-                self._reset_game_data()
-                return self.status
-
-    def get_game_data(self):
-        return json.loads(self._db.get('game_data'))
-
-    def tbl_next_game(self):
-        data = requests.get(f'{self._base_url}/api/v1/teams/14?expand=team.schedule.next&expand=schedule.broadcasts').json()
-        next_game = data['teams'][0]['nextGameSchedule']['dates'][0]['games'][0]
-        game_time_utc = dateutil.parser.parse(next_game['gameDate'])
-        game_time_est = game_time_utc.astimezone(pytz.timezone('America/New_York'))
-        teams = next_game['teams']
-        tv_channels = ['N/A']
-        broadcasts = next_game.get('broadcasts', None)
-        versus = 'Unknown'
-
-        if broadcasts:
-            tv_channels = []
-            for broadcast in broadcasts:
-                tv_channels.append(broadcast['name'])
-
-        if teams['away']['team']['id'] != 14:
-            versus = teams['away']['team']['name']
-
-        if teams['home']['team']['id'] != 14:
-            versus = teams['home']['team']['name']
-
-        next_game = {
-                'broadcasts': ', '.join(tv_channels),
-                'streams': '[CastStreams](https://www.caststreams.com/), [CrackStreams](http://crackstreams.biz/nhlstreams/)',
-                'time': game_time_est.strftime('%D %H:%M'),
-                'venue': next_game['venue']['name'],
-                'versus': versus,
+        self.poll_status = {
+                'status': None,
             }
 
-        return next_game
+        self.db.delete('status')
 
-    def tbl_record(self):
-        data = requests.get(f'{self._base_url}/api/v1/teams/14?expand=team.stats').json()
-        stats = data['teams'][0]['teamStats'][0]['splits'][0]['stat']
-        record = {
-                'games_played': stats['gamesPlayed'],
-                'losses': stats['losses'],
-                'ot': stats['ot'],
-                'points': stats['pts'],
-                'wins': stats['wins'],
-            }
+    def poll(self):
+        if self.scheduled():
+            self.poll_status['status'] = 'scheduled'
 
-        return record
+        return self.poll_status
 
-    def tbl_score(self):
-        if not self.status['start']:
-            return None
+    def scheduled(self):
+        try:
+            if self.db.get('status') == 'scheduled':
+                return True
+        except TypeError:
+            pass
 
-        return self.game_data
+        last_fetch = self.db.get('schedule_fetched')
 
-    def _get_scratches(self, scratches):
-        logger.info('Gathering the list of scratches')
-        players = []
+        if not last_fetch:
+            self._fetch_schedule()
+            last_fetch = self.db.get('schedule_fetched')
 
-        for scratch in scratches:
-            player_info = requests.get(f'{self._base_url}/api/v1/people/{scratch}').json()
-            players.append(player_info['people'][0]['fullName'])
+        last_fetch_datetime = datetime.strptime(last_fetch, '%Y-%m-%d').date()
+        next_fetch = last_fetch_datetime + timedelta(days=7)
+        today = date.today()
 
-        print(players)
-        return players
+        if today >= next_fetch:
+            self._fetch_schedule()
 
-    def _get_team_name(self, data):
-        api = data['team']['link']
-        url = f'{self._base_url}/{api}'
-        team_data = requests.get(url).json()
-        return team_data['teams'][0]['abbreviation']
+        for game in json.loads(self.db.get('schedule')):
+            game_date = game['gameDate']
+            game_date_datetime = datetime.strptime(game_date, '%Y-%m-%d').date()
 
-    def _no_game(self):
-        fields = [{'name': 'No game in progress', 'value': 'N/A'}]
-        return build_message('Curent Score', fields)
-
-    def _report_end(self, api, home_team, away_team):
-        data = requests.get(f'{self._base_url}{api}').json()
-        self.status['intermission'] = False
-        self.status['scheduled'] = False
-        self.status['start'] = False
-        self.status['end'] = True
-
-        self.game_data['home']['name'] = self._get_team_name(home_team)
-        self.game_data['home']['score'] = home_team['goals']
-        self.game_data['home']['sog'] = home_team['shotsOnGoal']
-        self.game_data['away']['name'] = self._get_team_name(away_team)
-        self.game_data['away']['score'] = away_team['goals']
-        self.game_data['away']['sog'] = away_team['shotsOnGoal']
-
-        return self.status
-
-    def _report_in_progress(self, api, home_team, away_team):
-        self.game_data['home']['name'] = self._get_team_name(home_team)
-        self.game_data['away']['name'] = self._get_team_name(away_team)
-
-        if not self.status['start']:
-            logger.warning('Scoreboard initialized')
-            self.status['start'] = True
-            self.status['end'] = False
-            self.game_data['home']['score'] = home_team['goals']
-            self.game_data['away']['score'] = away_team['goals']
-
-            data = requests.get(f'{self._base_url}{api}').json()
-            teams_data = data['liveData']['boxscore']['teams']
-            home_scratches = teams_data['home']['scratches']
-            away_scratches = teams_data['away']['scratches']
-
-            self.game_data['home']['scratches'] = self._get_scratches(home_scratches)
-            self.game_data['away']['scratches'] = self._get_scratches(away_scratches)
-
-        if home_team['goals'] != self.game_data['home']['score'] or away_team['goals'] != self.game_data['away']['score']:
-            logger.info('goal scored!!')
-            self.status['goal'] = True
-            self.game_data['home']['score'] = home_team['goals']
-            self.game_data['away']['score'] = away_team['goals']
-
-        return self.status
-
-    def _report_intermission(self, period, home_team, away_team):
-        logger.info('Intermission')
-        self.status['intermission'] = True
-        self.status['period'] = period
-        self.game_data['home']['name'] = self._get_team_name(home_team)
-        self.game_data['home']['score'] = home_team['goals']
-        self.game_data['home']['sog'] = home_team['shotsOnGoal']
-        self.game_data['away']['name'] = self._get_team_name(away_team)
-        self.game_data['away']['score'] = away_team['goals']
-        self.game_data['away']['sog'] = away_team['shotsOnGoal']
-
-        return self.status
-
-    def _report_scheduled(self, data):
-        if not self.status['scheduled']:
-            logger.info('Game scheduled today')
-            self.status['scheduled'] = True
-
-        team_details = data['teams']
-        home_wins = team_details['home']['leagueRecord']['wins']
-        home_losses = team_details['home']['leagueRecord']['losses']
-        home_ot = team_details['home']['leagueRecord']['ot']
-        away_wins = team_details['away']['leagueRecord']['wins']
-        away_losses = team_details['away']['leagueRecord']['losses']
-        away_ot = team_details['away']['leagueRecord']['ot']
-
-        self.game_data['home']['record'] = f'{home_wins}-{home_losses}-{home_ot}'
-        self.game_data['away']['record'] = f'{away_wins}-{away_losses}-{away_ot}'
-        self.game_data['venue'] = data['venue']['name']
-
-        game_time_utc = dateutil.parser.parse(data['gameDate'])
-        game_time_est = game_time_utc.astimezone(pytz.timezone('America/New_York'))
-        self.game_data['time'] = game_time_est.strftime('%D %H:%M')
-
-        self.game_data['home']['name'] = self._get_team_name(team_details['home'])
-        self.game_data['away']['name'] = self._get_team_name(team_details['away'])
-
-        self.game_data['broadcasts'] = [broadcast['name'] for broadcast in data['broadcasts'] if data['broadcasts']]
-
-        return self.status
-
-    def _reset_game_data(self):
-        logger.info('Resetting data')
-        self._process_dict(self.status)
-        self._process_dict(self.game_data)
-
-    def _process_dict(self, data):
-        for key, value in data.items():
-            if hasattr(value, 'items'):
-                self._process_dict(value)
+            if game_date_datetime != today:
                 continue
 
-            data[key] = None
+            self.db.set('status', 'scheduled')
+            self.db.set('schedule_game', json.dumps(game))
+            return True
+
+        self.db.set('schedule_today', 0)
+        return False
+
+    def get_scheduled_data(self):
+        data = {}
+        data['home'] = {}
+        data['away'] = {}
+
+        game = json.loads(self.db.get('schedule_game'))
+        game_time_utc = dateutil.parser.parse(game['startTimeUTC'])
+        game_time_est = game_time_utc.astimezone(pytz.timezone('America/New_York'))
+        records = self._get_records(game['homeTeam']['abbrev'], game['awayTeam']['abbrev'])
+
+        data['time'] = game_time_est.strftime('%D %H:%M')
+        data['venue'] = game['venue']['default']
+        data['broadcasts'] = [broadcast['network'] for broadcast in game['tvBroadcasts']]
+        data['home']['name'] = game['homeTeam']['abbrev']
+        data['away']['name'] = game['awayTeam']['abbrev']
+        data['home']['record'] = records['home']
+        data['away']['record'] = records['away']
+
+        self._fetch_standings()
+        standings = json.loads(self.db.get('standings'))
+
+        for team in standings:
+            team_abbrev = team['teamAbbrev']['default']
+
+            if team_abbrev == data['home']['name']:
+                hwins = team['wins']
+                hloss = team['losses']
+                hot = team['otLosses']
+
+                data['home']['record'] = f'{hwins}-{hloss}-{hot}'
+
+            if team_abbrev == data['away']['name']:
+                awins = team['wins']
+                aloss = team['losses']
+                aot = team['otLosses']
+
+                data['away']['record'] = f'{awins}-{aloss}-{aot}'
+
+        return data
+
+    def _fetch_schedule(self):
+        today = str(date.today())
+        schedule = self.client.schedule.get_schedule_by_team_by_week(team_abbr = 'TBL')
+
+        self.db.set('schedule', json.dumps(schedule))
+        self.db.set('schedule_fetched', today)
+
+    def _fetch_standings(self):
+        standings = self.client.standings.get_standings()['standings']
+        self.db.set('standings', json.dumps(standings))

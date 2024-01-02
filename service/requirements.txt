@@ -1,4 +1,5 @@
 discord
+nhl-api-py
 python-dateutil
 python-dotenv
 pytz
