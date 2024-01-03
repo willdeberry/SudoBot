@@ -98,10 +98,10 @@ class HockeyGame:
             return False
 
         if self.db.exists('home_goals'):
-            cur_home_goals = self.db.get('home_goals')
+            cur_home_goals = int(self.db.get('home_goals'))
 
         if self.db.exists('away_goals'):
-            cur_away_goals = self.db.get('away_goals')
+            cur_away_goals = int(self.db.get('away_goals'))
 
         total_goals = boxscore['boxscore']['linescore']['totals']
         home_goals = total_goals['home']
@@ -110,6 +110,7 @@ class HockeyGame:
         if home_goals != cur_home_goals or away_goals != cur_away_goals:
             self.db.set('home_goals', home_goals)
             self.db.set('away_goals', away_goals)
+            self.db.set('time_scored', boxscore['clock']['timeRemaining'])
 
             return True
 
@@ -196,7 +197,7 @@ class HockeyGame:
         data['away']['name'] = boxscore['awayTeam']['abbrev']
         data['home']['score'] = self.db.get('home_goals')
         data['away']['score'] = self.db.get('away_goals')
-        data['time_left'] = boxscore['clock']['timeRemaining']
+        data['time_left'] = self.db.get('time_scored')
 
         return data
 
