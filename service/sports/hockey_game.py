@@ -81,7 +81,7 @@ class HockeyGame:
         self._fetch_boxscore(game_id)
         game_state = json.loads(self.db.get('boxscore'))['gameState']
 
-        if game_state != 'OK':
+        if game_state != 'LIVE':
             return False
 
         return True
@@ -94,7 +94,7 @@ class HockeyGame:
         boxscore = json.loads(self.db.get('boxscore'))
         game_state = boxscore['gameState']
 
-        if game_state != 'OK':
+        if game_state != 'LIVE':
             return False
 
         if self.db.exists('home_goals'):
