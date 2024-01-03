@@ -11,7 +11,6 @@ class HockeyGame:
     def __init__(self):
         self.client = NHLClient()
         self.db = redis.Redis(host='redis', port=6379, decode_responses=True)
-
         self.poll_status = None
 
         self.db.delete('status')
@@ -19,30 +18,18 @@ class HockeyGame:
     def poll(self):
         self.poll_status = None
 
-        if self.scheduled():
-            self.poll_status = 'scheduled'
+        self.scheduled()
+        self.start()
+        self.goal()
+        self.intermission()
+        self.game_end()
 
-        if self.start():
-            self.poll_status = 'start'
-
-        if self.goal():
-            self.poll_status = 'goal'
-
-        if self.intermission():
-            self.poll_status = 'intermission'
-
-        if self.game_end():
-            self.poll_status = 'end'
+        if self.db.exists('status'):
+            self.poll_status = self.db.get('status')
 
         return self.poll_status
 
     def scheduled(self):
-        try:
-            if self.db.get('status') == 'scheduled':
-                return True
-        except TypeError:
-            pass
-
         last_fetch = self.db.get('schedule_fetched')
 
         if not last_fetch:
@@ -65,26 +52,17 @@ class HockeyGame:
 
             self.db.set('status', 'scheduled')
             self.db.set('schedule_game', json.dumps(game))
-            return True
-
-        self.db.set('schedule_today', 0)
-        return False
+            return
 
     def start(self):
-        try:
-            if self.db.get('status') == 'start':
-                return True
-        except TypeError:
-            pass
-
         game_id = json.loads(self.db.get('schedule_game'))['id']
         self._fetch_boxscore(game_id)
         game_state = json.loads(self.db.get('boxscore'))['gameState']
 
         if game_state != 'LIVE':
-            return False
+            return
 
-        return True
+        self.db.set('status', 'start')
 
     def goal(self):
         cur_home_goals = 0
@@ -95,7 +73,7 @@ class HockeyGame:
         game_state = boxscore['gameState']
 
         if game_state != 'LIVE':
-            return False
+            return
 
         if self.db.exists('home_goals'):
             cur_home_goals = int(self.db.get('home_goals'))
@@ -111,10 +89,7 @@ class HockeyGame:
             self.db.set('home_goals', home_goals)
             self.db.set('away_goals', away_goals)
             self.db.set('time_scored', boxscore['clock']['timeRemaining'])
-
-            return True
-
-        return False
+            self.db.set('status', 'goal')
 
     def intermission(self):
         game_id = json.loads(self.db.get('schedule_game'))['id']
@@ -123,26 +98,19 @@ class HockeyGame:
         game_state = boxscore['gameState']
 
         if game_state != 'LIVE':
-            return False
+            return
 
-        return boxscore['clock']['inIntermission']
+        if boxscore['clock']['inIntermission']:
+            self.db.set('status', 'intermission')
 
     def game_end(self):
-        try:
-            if self.db.get('status') == 'end':
-                return True
-        except TypeError:
-            pass
-
         boxscore = json.loads(self.db.get('boxscore'))
         game_state = boxscore['gameState']
 
-        if game_state in ['FINAL', 'OFF']:
+        if game_state in ['FINAL']:
             self.db.delete('home_goals')
             self.db.delete('away_goals')
-            return True
-
-        return False
+            self.db.set('status', 'end')
 
     def get_scheduled_data(self):
         data = {}
