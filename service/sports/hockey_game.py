@@ -103,7 +103,7 @@ class HockeyGame:
         if self.db.exists('away_goals'):
             away_goals = self.db.get('away_goals')
 
-        total_goals = boxscore['linescore']['totals']
+        total_goals = boxscore['boxscore']['linescore']['totals']
         home_goals = total_goals['home']
         away_goals = total_goals['away']
 
@@ -172,7 +172,7 @@ class HockeyGame:
 
         boxscore = json.loads(self.db.get('boxscore'))
         records = self._get_records(boxscore['homeTeam']['abbrev'], boxscore['awayTeam']['abbrev'])
-        game_info = boxscore['boxscore']['gameInfo']['homeTeam']['scratches']
+        game_info = boxscore['boxscore']['gameInfo']
         home_scratches = game_info['homeTeam']['scratches']
         away_scratches = game_info['awayTeam']['scratches']
 
