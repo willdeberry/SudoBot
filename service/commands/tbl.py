@@ -3,10 +3,14 @@ from datetime import date, datetime
 import dateutil.parser
 import discord
 from discord import app_commands
+import logging
 from nhlpy import NHLClient
 import pytz
 
 from utilities.helpers import build_embed
+
+
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.DEBUG)
 
 
 class TBLCommands(app_commands.Group):
@@ -14,7 +18,8 @@ class TBLCommands(app_commands.Group):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = 'tbl'
-        self.client = NHLClient()
+        self.client = NHLClient(verbose = False)
+        self.tn_url = 'https://w7.pngwing.com/pngs/515/727/png-transparent-tampa-bay-lightning-national-hockey-league-tampa-bay-rays-tampa-bay-buccaneers-2015-stanley-cup-finals-bay-miscellaneous-blue-game.png'
 
     @app_commands.command(description = 'Next scheduled game')
     async def next(self, ctx):
@@ -26,20 +31,28 @@ class TBLCommands(app_commands.Group):
                 {'name': 'Streams', 'value': details['streams'], 'inline': True}
             ]
         embed = build_embed('Next Game', fields)
+        embed.set_thumbnail(url = self.tn_url)
+
+        logging.warning(f'embed: {embed.thumbnail}')
 
         await ctx.response.send_message(embed = embed)
 
     @app_commands.command(description = 'Current record')
     async def record(self, ctx):
         details = self._fetch_record()
+        wins = details['wins']
+        losses = details['losses']
+        ot = details['otLosses']
+
         fields = [
-                {'name': 'Games Played', 'value': details['gamesPlayed']},
-                {'name': 'Wins', 'value': details['wins'], 'inline': True},
-                {'name': 'Losses', 'value': details['losses'], 'inline': True},
-                {'name': 'OT Losses', 'value': details['otLosses'], 'inline': True},
-                {'name': 'Points', 'value': details['points']}
+                {'name': 'Games Played', 'value': details['gamesPlayed'], 'inline': True},
+                {'name': 'Record', 'value': f'{wins}-{losses}-{ot}', 'inline': True},
+                {'name': 'Points', 'value': details['points'], 'inline': True},
+                {'name': 'Point%', 'value': details['pointPctg'], 'inline': True},
+                {'name': 'Diff', 'value': details['goalDifferential'], 'inline': True}
             ]
         embed = build_embed("TBL's Record", fields)
+        embed.set_thumbnail(url = self.tn_url)
 
         await ctx.response.send_message(embed = embed)
 
@@ -54,7 +67,9 @@ class TBLCommands(app_commands.Group):
         home = details['homeTeam']
         away = details['awayTeam']
         fields = [{'name': 'Game', 'value': f"{home['abbrev']} {home['score']} - {away['score']} {away['abbrev']}"}]
-        return build_message('Current Score', fields)
+        embed =  build_embed('Current Score', fields)
+        embed.set_thumbnail(url = self.tn_url)
+
         await ctx.response.send_message(embed = embed)
 
     def _fetch_next_game(self):
@@ -68,10 +83,11 @@ class TBLCommands(app_commands.Group):
         game_time_est = game_time_utc.astimezone(pytz.timezone('America/New_York'))
         game_time = game_time_est.strftime('%D %H:%M')
         broadcasts = [broadcast['network'] for broadcast in game['tvBroadcasts']]
-        versus = game['awayTeam']['abbrev']
+        versus = game['awayTeam']['placeName']['default']
+        team_abbrev = game['awayTeam']['abbrev']
 
-        if versus.lower() == self.name:
-            versus = game['homeTeam']['abbrev']
+        if team_abbrev.lower() == self.name:
+            versus = game['homeTeam']['placeName']['default']
 
         return {
                 'time': game_time,

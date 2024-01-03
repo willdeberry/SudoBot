@@ -9,7 +9,7 @@ import redis
 
 class HockeyGame:
     def __init__(self):
-        self.client = NHLClient()
+        self.client = NHLClient(verbose = False)
         self.db = redis.Redis(host='redis', port=6379, decode_responses=True)
         self.poll_status = None
 
