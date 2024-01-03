@@ -56,6 +56,7 @@ class HockeyUpdates:
     async def _report_end(self):
         # If the value is 1 (True), then we don't need to report the game ended again.
         if int(self._db.get('report_game_end')) == 1:
+            self._update_reporting_db('end')
             return
 
         data = self.hockey_game.get_game_end_data()
@@ -91,6 +92,7 @@ class HockeyUpdates:
     async def _report_game_scheduled(self):
         # If the value is 1 (True), then we don't need to report the game scheduled again.
         if int(self._db.get('report_game_scheduled')) == 1:
+            self._update_reporting_db('scheduled')
             return
 
         data = self.hockey_game.get_scheduled_data()
@@ -119,6 +121,7 @@ class HockeyUpdates:
     async def _report_game_start(self):
         # If the value is 1 (True), then we don't need to report the game started again.
         if int(self._db.get('report_game_start')) == 1:
+            self._update_reporting_db('start')
             return
 
         data = self.hockey_game.get_start_data()
@@ -140,6 +143,11 @@ class HockeyUpdates:
         self._update_reporting_db('start')
 
     async def _report_intermission(self):
+        # If the value is 1 (True), then we don't need to report the game started again.
+        if int(self._db.get('report_game_intermission')) == 1:
+            self._update_reporting_db('intermission')
+            return
+
         data = self.hockey_game.get_intermission_data()
         period = data['period']
         home_name = data['home']['name']
@@ -156,6 +164,7 @@ class HockeyUpdates:
         embed = build_embed(f'End of {period} period', fields)
 
         await self._send_to_channel(self.sports_channel, embed = embed)
+        self._update_reporting_db('intermission')
 
     async def _send_to_channel(self, channel, content = False, embed = False):
         if content:
@@ -172,15 +181,24 @@ class HockeyUpdates:
                 self._db.set('report_game_end', 0)
                 self._db.set('report_game_scheduled', 1)
                 self._db.set('report_game_start', 0)
+                self._db.set('report_game_intermission', 0)
             case 'start':
                 self._db.set('report_game_end', 0)
                 self._db.set('report_game_scheduled', 1)
                 self._db.set('report_game_start', 1)
+                self._db.set('report_game_intermission', 0)
+            case 'intermission':
+                self._db.set('report_game_end', 0)
+                self._db.set('report_game_scheduled', 1)
+                self._db.set('report_game_start', 1)
+                self._db.set('report_game_intermission', 1)
             case 'end':
                 self._db.set('report_game_end', 1)
                 self._db.set('report_game_scheduled', 1)
                 self._db.set('report_game_start', 1)
+                self._db.set('report_game_intermission', 1)
             case 'reset':
                 self._db.set('report_game_end', 0)
                 self._db.set('report_game_scheduled', 0)
                 self._db.set('report_game_start', 0)
+                self._db.set('report_game_intermission', 0)

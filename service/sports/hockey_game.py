@@ -117,15 +117,13 @@ class HockeyGame:
         return False
 
     def intermission(self):
-        try:
-            if self.db.get('status') == 'intermission':
-                return True
-        except TypeError:
-            pass
-
         game_id = json.loads(self.db.get('schedule_game'))['id']
         self._fetch_boxscore(game_id)
         boxscore = json.loads(self.db.get('boxscore'))
+        game_state = boxscore['gameState']
+
+        if game_state != 'LIVE':
+            return False
 
         return boxscore['clock']['inIntermission']
 
@@ -140,8 +138,8 @@ class HockeyGame:
         game_state = boxscore['gameState']
 
         if game_state in ['FINAL', 'OFF']:
-            self.db.delete('home_goals', 0)
-            self.db.delete('away_goals', 0)
+            self.db.delete('home_goals')
+            self.db.delete('away_goals')
             return True
 
         return False
@@ -220,6 +218,7 @@ class HockeyGame:
         data['away']['name'] = away_stats['abbrev']
         data['away']['score'] = away_stats['score']
         data['away']['sog'] = away_stats['sog']
+        data['period'] = period
 
         return data
 
