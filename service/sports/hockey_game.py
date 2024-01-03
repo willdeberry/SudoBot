@@ -98,10 +98,10 @@ class HockeyGame:
             return False
 
         if self.db.exists('home_goals'):
-            home_goals = self.db.get('home_goals')
+            cur_home_goals = self.db.get('home_goals')
 
         if self.db.exists('away_goals'):
-            away_goals = self.db.get('away_goals')
+            cur_away_goals = self.db.get('away_goals')
 
         total_goals = boxscore['boxscore']['linescore']['totals']
         home_goals = total_goals['home']

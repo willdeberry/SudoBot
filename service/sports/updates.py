@@ -79,12 +79,12 @@ class HockeyUpdates:
     async def _report_score(self):
         data = self.hockey_game.get_goal_data()
         home_name = data['home']['name']
-        home_sore = data['home']['score']
+        home_score = data['home']['score']
         away_name = data['away']['name']
-        away_sore = data['away']['score']
-        time_remaining = data['time_remaining']
+        away_score = data['away']['score']
+        time_left = data['time_left']
 
-        content = f"Goal Scored: {home_name} {home_score} - {away_score} {away_name} w/ {time_remaining} left"
+        content = f"Goal Scored: {home_name} {home_score} - {away_score} {away_name} w/ {time_left} left"
 
         await self._send_to_channel(self.sports_channel, content = content)
 
