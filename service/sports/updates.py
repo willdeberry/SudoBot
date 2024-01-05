@@ -84,8 +84,9 @@ class HockeyUpdates:
         away_name = data['away']['name']
         away_score = data['away']['score']
         time_left = data['time_left']
+        period = data['period']
 
-        content = f"Goal Scored: {home_name} {home_score} - {away_score} {away_name} w/ {time_left} left"
+        content = f"Goal Scored: {home_name} {home_score} - {away_score} {away_name} w/ {time_left} left in period {period}"
 
         await self._send_to_channel(self.sports_channel, content = content)
 

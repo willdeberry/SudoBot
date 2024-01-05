@@ -89,6 +89,7 @@ class HockeyGame:
             self.db.set('home_goals', home_goals)
             self.db.set('away_goals', away_goals)
             self.db.set('time_scored', boxscore['clock']['timeRemaining'])
+            self.db.set('period_scored', boxscore['period'])
             self.db.set('status', 'goal')
 
     def intermission(self):
@@ -164,6 +165,7 @@ class HockeyGame:
         data['home']['score'] = self.db.get('home_goals')
         data['away']['score'] = self.db.get('away_goals')
         data['time_left'] = self.db.get('time_scored')
+        data['period'] = self.db.get('period_scored')
 
         return data
 
