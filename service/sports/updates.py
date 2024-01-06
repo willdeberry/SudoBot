@@ -65,12 +65,21 @@ class HockeyUpdates:
 
         home_score = home['score']
         home_sog = home['sog']
+        home_fpperc = data['home']['fopercent']
+        home_ppconv = data['home']['ppconversion']
+        home_hits = data['home']['hits']
         away_score = away['score']
         away_sog = away['sog']
+        away_fpperc = data['away']['fopercent']
+        away_ppconv = data['away']['ppconversion']
+        away_hits = data['away']['hits']
 
         fields = [
-                {'name': home['name'], 'value': f'{home_score} ({home_sog} sog)'},
-                {'name': away['name'], 'value': f'{away_score} ({away_sog} sog)'}
+                {'name': 'Score', 'value': f'{home_name}: {home_score} - {away_score} :{away_name}'},
+                {'name': 'Shots on Goal', 'value': f'{home_name}: {home_sog} - {away_sog} :{away_name}'},
+                {'name': 'FaceOff %', 'value': f'{home_name}: {home_fpperc} - {away_fpperc} :{away_name}'},
+                {'name': 'PP Conversion', 'value': f'{home_name}: {home_ppconv} - {away_ppconv} :{away_name}'},
+                {'name': 'Hits', 'value': f'{home_name}: {home_hits} - {away_hits} :{away_name}'}
             ]
         embed = build_embed('Game End', fields)
 
