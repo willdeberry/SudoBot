@@ -43,13 +43,24 @@ class TBLCommands(app_commands.Group):
         wins = details['wins']
         losses = details['losses']
         ot = details['otLosses']
+        position = details['divisionSequence']
+        position_suffix = 'th'
+
+        match position:
+            case 1:
+                position_suffix = 'st'
+            case 2:
+                position_suffix = 'nd'
+            case 3:
+                position_suffix = 'rd'
 
         fields = [
                 {'name': 'Games Played', 'value': details['gamesPlayed'], 'inline': True},
                 {'name': 'Record', 'value': f'{wins}-{losses}-{ot}', 'inline': True},
                 {'name': 'Points', 'value': details['points'], 'inline': True},
-                {'name': 'Point%', 'value': details['pointPctg'], 'inline': True},
-                {'name': 'Diff', 'value': details['goalDifferential'], 'inline': True}
+                {'name': 'Position', 'value': f'{position}{position_suffix}', 'inline': True},
+                {'name': 'Point %', 'value': details['pointPctg'], 'inline': True},
+                {'name': 'Goal Diff', 'value': details['goalDifferential'], 'inline': True}
             ]
         embed = build_embed("TBL's Record", fields)
         embed.set_thumbnail(url = self.tn_url)
