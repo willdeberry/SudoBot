@@ -14,10 +14,8 @@ services:
       - ./nginx/certs:/etc/nginx/certs
       - ./nginx/snippets:/etc/nginx/snippets
     links:
-      - redis
       - sudobot_webhooks
     depends_on:
-      - redis
       - sudobot_webhooks
 
   sudobot_webhooks:
@@ -32,7 +30,11 @@ services:
   sudobot_service:
     build: ./service
     container_name: sudobot_service
+    depends_on:
+      - redis
     mem_limit: 512M
+    links:
+      - redis
     volumes:
       - ./service:/usr/bin/sudobot
 
