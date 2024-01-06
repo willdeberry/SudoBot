@@ -10,7 +10,7 @@ import pytz
 from utilities.helpers import build_embed
 
 
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
 class TBLCommands(app_commands.Group):

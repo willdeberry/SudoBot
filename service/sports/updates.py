@@ -9,7 +9,7 @@ from sports.hockey_game import HockeyGame
 from utilities.helpers import build_embed
 
 
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
 class HockeyUpdates:
