@@ -55,25 +55,33 @@ class HockeyGame:
             return
 
     def start(self):
-        game_id = json.loads(self.db.get('schedule_game'))['id']
-        self._fetch_boxscore(game_id)
-        game_state = json.loads(self.db.get('boxscore'))['gameState']
+        schedule_game = json.loads(self.db.get('schedule_game'))
+        game_id = schedule_game['id']
+        game_state = schedule_game['gameState']
 
         if game_state != 'LIVE':
             return
 
+        self._fetch_boxscore(game_id)
         self.db.set('status', 'start')
 
     def goal(self):
-        cur_home_goals = 0
-        cur_away_goals = 0
-        game_id = json.loads(self.db.get('schedule_game'))['id']
-        self._fetch_boxscore(game_id)
-        boxscore = json.loads(self.db.get('boxscore'))
-        game_state = boxscore['gameState']
+        current_status = self.db.get('status')
+
+        if current_status not in ['start', 'scheduled']:
+            return
+
+        schedule_game = json.loads(self.db.get('schedule_game'))
+        game_state = schedule_game['gameState']
 
         if game_state != 'LIVE':
             return
+
+        cur_home_goals = 0
+        cur_away_goals = 0
+        game_id = schedule_game['id']
+        self._fetch_boxscore(game_id)
+        boxscore = json.loads(self.db.get('boxscore'))
 
         if self.db.exists('home_goals'):
             cur_home_goals = int(self.db.get('home_goals'))
@@ -94,6 +102,11 @@ class HockeyGame:
 
     def intermission(self):
         game_id = json.loads(self.db.get('schedule_game'))['id']
+        current_status = self.db.get('status')
+
+        if current_status not in ['start', 'scheduled']:
+            return
+
         self._fetch_boxscore(game_id)
         boxscore = json.loads(self.db.get('boxscore'))
         game_state = boxscore['gameState']
@@ -105,6 +118,11 @@ class HockeyGame:
             self.db.set('status', 'intermission')
 
     def game_end(self):
+        current_status = self.db.get('status')
+
+        if current_status not in ['start', 'scheduled', 'intermission']:
+            return
+
         boxscore = json.loads(self.db.get('boxscore'))
         game_state = boxscore['gameState']
 
