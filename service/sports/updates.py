@@ -63,16 +63,18 @@ class HockeyUpdates:
         home = data['home']
         away = data['away']
 
+        home_name = home['name']
         home_score = home['score']
         home_sog = home['sog']
-        home_fpperc = data['home']['fopercent']
-        home_ppconv = data['home']['ppconversion']
-        home_hits = data['home']['hits']
+        home_fpperc = home['fopercent']
+        home_ppconv = home['ppconversion']
+        home_hits = home['hits']
+        away_name = away['name']
         away_score = away['score']
         away_sog = away['sog']
-        away_fpperc = data['away']['fopercent']
-        away_ppconv = data['away']['ppconversion']
-        away_hits = data['away']['hits']
+        away_fpperc = away['fopercent']
+        away_ppconv = away['ppconversion']
+        away_hits = away['hits']
 
         fields = [
                 {'name': 'Score', 'value': f'{home_name}: {home_score} - {away_score} :{away_name}'},
