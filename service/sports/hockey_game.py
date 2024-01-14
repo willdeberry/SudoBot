@@ -30,18 +30,8 @@ class HockeyGame:
         return self.poll_status
 
     def scheduled(self):
-        last_fetch = self.db.get('schedule_fetched')
-
-        if not last_fetch:
-            self._fetch_schedule()
-            last_fetch = self.db.get('schedule_fetched')
-
-        last_fetch_datetime = datetime.strptime(last_fetch, '%Y-%m-%d').date()
-        next_fetch = last_fetch_datetime + timedelta(days=7)
         today = date.today()
-
-        if today >= next_fetch:
-            self._fetch_schedule()
+        self._fetch_schedule()
 
         for game in json.loads(self.db.get('schedule')):
             game_date = game['gameDate']
@@ -203,13 +193,9 @@ class HockeyGame:
         data['home']['name'] = home_stats['abbrev']
         data['home']['score'] = home_stats['score']
         data['home']['sog'] = home_stats['sog']
-        data['home']['hits'] = home_stats['hits']
         data['away']['name'] = away_stats['abbrev']
         data['away']['score'] = away_stats['score']
         data['away']['sog'] = away_stats['sog']
-        data['away']['fopercent'] = away_stats['faceoffWinningPctg']
-        data['away']['ppconversion'] = away_stats['powerPlayConversion']
-        data['away']['hits'] = away_stats['hits']
         data['period'] = period
 
         return data
