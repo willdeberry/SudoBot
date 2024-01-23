@@ -226,17 +226,29 @@ class HockeyGame:
 
     def _fetch_schedule(self):
         today = str(date.today())
-        schedule = self.client.schedule.get_schedule_by_team_by_week(team_abbr = 'TBL')
+
+        try:
+            schedule = self.client.schedule.get_schedule_by_team_by_week(team_abbr = 'TBL')
+        except:
+            return
 
         self.db.set('schedule', json.dumps(schedule))
         self.db.set('schedule_fetched', today)
 
     def _fetch_standings(self):
-        standings = self.client.standings.get_standings()['standings']
+        try:
+            standings = self.client.standings.get_standings()['standings']
+        except:
+            return
+
         self.db.set('standings', json.dumps(standings))
 
     def _fetch_boxscore(self, game_id):
-        boxscore = self.client.game_center.boxscore(game_id = game_id)
+        try:
+            boxscore = self.client.game_center.boxscore(game_id = game_id)
+        except:
+            return
+
         self.db.set('boxscore', json.dumps(boxscore))
 
     def _get_records(self, home_name, away_name):
