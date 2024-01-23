@@ -37,24 +37,23 @@ class TBLCommands(app_commands.Group):
         wins = details['wins']
         losses = details['losses']
         ot = details['otLosses']
+        l10wins = details['l10Wins']
+        l10losses = details['l10Losses']
+        l10ot = details['l10OtLosses']
         position = details['divisionSequence']
-        position_suffix = 'th'
-
-        match position:
-            case 1:
-                position_suffix = 'st'
-            case 2:
-                position_suffix = 'nd'
-            case 3:
-                position_suffix = 'rd'
+        position_suffix = self._return_suffix(position)
+        wildcard = details['wildcardSequence']
+        wildcard_suffix = self._return_suffix(wildcard)
 
         fields = [
                 {'name': 'Games Played', 'value': details['gamesPlayed'], 'inline': True},
+                {'name': 'Pos/WC', 'value': f'{position}{position_suffix}/{wildcard}{wildcard_suffix}', 'inline': True},
                 {'name': 'Record', 'value': f'{wins}-{losses}-{ot}', 'inline': True},
                 {'name': 'Points', 'value': details['points'], 'inline': True},
-                {'name': 'Position', 'value': f'{position}{position_suffix}', 'inline': True},
-                {'name': 'Point %', 'value': details['pointPctg'], 'inline': True},
-                {'name': 'Goal Diff', 'value': details['goalDifferential'], 'inline': True}
+                {'name': 'Goal Diff', 'value': details['goalDifferential'], 'inline': True},
+                {'name': 'Point %', 'value': round(details['pointPctg'], 3), 'inline': True},
+                {'name': 'Last 10', 'value': f'{l10wins}-{l10losses}-{l10ot}', 'inline': True},
+                {'name': 'Streak', 'value': f'{details["streakCode"]}{details["streakCount"]}', 'inline': True}
             ]
         embed = build_embed("TBL's Record", fields)
         embed.set_thumbnail(url = self.tn_url)
@@ -139,3 +138,14 @@ class TBLCommands(app_commands.Group):
             return game
 
         return False
+
+    def _return_suffix(self, position):
+        match position:
+            case 1:
+                return 'st'
+            case 2:
+                return 'nd'
+            case 3:
+                return 'rd'
+            case _:
+                return 'th'
