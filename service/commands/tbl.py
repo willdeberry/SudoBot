@@ -3,14 +3,10 @@ from datetime import date, datetime
 import dateutil.parser
 import discord
 from discord import app_commands
-import logging
 from nhlpy import NHLClient
 import pytz
 
 from utilities.helpers import build_embed
-
-
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
 class TBLCommands(app_commands.Group):
@@ -32,8 +28,6 @@ class TBLCommands(app_commands.Group):
             ]
         embed = build_embed('Next Game', fields)
         embed.set_thumbnail(url = self.tn_url)
-
-        logging.warning(f'embed: {embed.thumbnail}')
 
         await ctx.response.send_message(embed = embed)
 

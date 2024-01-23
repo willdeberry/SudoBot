@@ -2,14 +2,11 @@
 import discord
 from discord.ext import tasks
 import json
-import logging
 import redis
 
 from sports.hockey_game import HockeyGame
 from utilities.helpers import build_embed
-
-
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+from utilities.logger import logger
 
 
 class HockeyUpdates:
@@ -24,22 +21,21 @@ class HockeyUpdates:
     @tasks.loop(seconds = 15)
     async def check_score(self):
         game = self.hockey_game.poll()
-        logging.warning(f'game status: {game}')
 
         match game:
             case 'scheduled':
-                logging.info('reporting game scheduled')
+                logger.info('reporting game scheduled')
                 await self._report_game_scheduled()
             case 'start':
-                logging.info('reporting game start')
+                logger.info('reporting game start')
                 await self._report_game_start()
             case 'goal':
                 await self._report_score()
             case 'intermission':
-                logging.info('reporting intermission')
+                logger.info('reporting intermission')
                 await self._report_intermission()
             case 'end':
-                logging.info('reporting end of game')
+                logger.info('reporting end of game')
                 await self._report_end()
             case _:
                 self._update_reporting_db('reset')
@@ -108,9 +104,6 @@ class HockeyUpdates:
             return
 
         data = self.hockey_game.get_scheduled_data()
-
-        logging.debug(f'scheduled data: {json.dumps(data)}')
-
         home_name = data['home']['name']
         home_record = data['home']['record']
         away_name = data['away']['name']
@@ -137,9 +130,6 @@ class HockeyUpdates:
             return
 
         data = self.hockey_game.get_start_data()
-
-        logging.debug(f'start data: {json.dumps(data)}')
-
         home_record = data['home']['record']
         home_scratches = ', '.join(data['home']['scratches'])
         away_record = data['away']['record']
