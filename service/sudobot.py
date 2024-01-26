@@ -8,7 +8,6 @@ from socket import gethostbyname
 from utilities.helpers import build_embed
 from utilities.logger import logger
 from commands.status import Status
-from commands.bucs import BucsCommands
 from commands.tbl import TBLCommands
 from sports.updates import HockeyUpdates
 
@@ -93,7 +92,6 @@ def main():
         await ctx.response.send_message(embed = embed)
 
     client.tree.add_command(TBLCommands(), guild = client.guild_id)
-    client.tree.add_command(BucsCommands(), guild = client.guild_id)
     client.run(os.environ.get('BOT_TOKEN'))
 
 
