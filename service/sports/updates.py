@@ -24,18 +24,14 @@ class HockeyUpdates:
 
         match game:
             case 'scheduled':
-                logger.info('reporting game scheduled')
                 await self._report_game_scheduled()
             case 'start':
-                logger.info('reporting game start')
                 await self._report_game_start()
             case 'goal':
                 await self._report_score()
             case 'intermission':
-                logger.info('reporting intermission')
                 await self._report_intermission()
             case 'end':
-                logger.info('reporting end of game')
                 await self._report_end()
             case _:
                 self._update_reporting_db('reset')
@@ -54,6 +50,8 @@ class HockeyUpdates:
         if int(self._db.get('report_game_end')) == 1:
             self._update_reporting_db('end')
             return
+
+        logger.info('reporting end of game')
 
         data = self.hockey_game.get_game_end_data()
         home = data['home']
@@ -103,6 +101,8 @@ class HockeyUpdates:
             self._update_reporting_db('scheduled')
             return
 
+        logger.info('reporting game scheduled')
+
         data = self.hockey_game.get_scheduled_data()
         home_name = data['home']['name']
         home_record = data['home']['record']
@@ -129,6 +129,8 @@ class HockeyUpdates:
             self._update_reporting_db('start')
             return
 
+        logger.info('reporting game start')
+
         data = self.hockey_game.get_start_data()
         home_record = data['home']['record']
         home_scratches = ', '.join(data['home']['scratches'])
@@ -149,6 +151,8 @@ class HockeyUpdates:
         if int(self._db.get('report_game_intermission')) == 1:
             self._update_reporting_db('intermission')
             return
+
+        logger.info('reporting intermission')
 
         data = self.hockey_game.get_intermission_data()
         period = data['period']
