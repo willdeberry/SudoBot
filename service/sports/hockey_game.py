@@ -45,6 +45,9 @@ class HockeyGame:
             return
 
     def start(self):
+        if not self.db.exists('schedule_game'):
+            return
+
         schedule_game = json.loads(self.db.get('schedule_game'))
         game_id = schedule_game['id']
         game_state = schedule_game['gameState']
@@ -59,6 +62,9 @@ class HockeyGame:
         current_status = self.db.get('status')
 
         if current_status not in ['start', 'scheduled']:
+            return
+
+        if not self.db.exists('schedule_game'):
             return
 
         schedule_game = json.loads(self.db.get('schedule_game'))
@@ -95,6 +101,9 @@ class HockeyGame:
             self.db.set('status', 'goal')
 
     def intermission(self):
+        if not self.db.exists('schedule_game'):
+            return
+
         game_id = json.loads(self.db.get('schedule_game'))['id']
         current_status = self.db.get('status')
 
@@ -123,6 +132,7 @@ class HockeyGame:
         if game_state in ['FINAL']:
             self.db.delete('home_goals')
             self.db.delete('away_goals')
+            self.db.delete('schedule_game')
             self.db.set('status', 'end')
 
     def get_scheduled_data(self):
