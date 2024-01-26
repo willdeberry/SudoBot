@@ -79,7 +79,11 @@ class HockeyGame:
         if self.db.exists('away_goals'):
             cur_away_goals = int(self.db.get('away_goals'))
 
-        total_goals = boxscore['boxscore']['linescore']['totals']
+        try:
+            total_goals = boxscore['boxscore']['linescore']['totals']
+        except KeyError:
+            return
+
         home_goals = total_goals['home']
         away_goals = total_goals['away']
 
