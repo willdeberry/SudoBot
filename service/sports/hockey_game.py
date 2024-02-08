@@ -35,9 +35,13 @@ class HockeyGame:
 
         for game in json.loads(self.db.get('schedule')):
             game_date = game['gameDate']
+            game_state = game['gameState']
             game_date_datetime = datetime.strptime(game_date, '%Y-%m-%d').date()
 
             if game_date_datetime != today:
+                continue
+
+            if game_state != 'FUT':
                 continue
 
             self.db.set('status', 'scheduled')

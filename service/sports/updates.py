@@ -200,7 +200,7 @@ class HockeyUpdates:
                 self._db.set('report_game_intermission', 1)
             case 'end':
                 self._db.set('report_game_end', 1)
-                self._db.set('report_game_scheduled', 1)
+                self._db.set('report_game_scheduled', 0)
                 self._db.set('report_game_start', 1)
                 self._db.set('report_game_intermission', 1)
             case 'reset':
