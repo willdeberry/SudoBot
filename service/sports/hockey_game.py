@@ -160,6 +160,11 @@ class HockeyGame:
         data['home'] = {}
         data['away'] = {}
 
+        schedule_game = json.loads(self.db.get('schedule_game'))
+        game_id = schedule_game['id']
+
+        self._fetch_boxscore(game_id)
+
         boxscore = json.loads(self.db.get('boxscore'))
         records = self._get_records(boxscore['homeTeam']['abbrev'], boxscore['awayTeam']['abbrev'])
         game_info = boxscore['boxscore']['gameInfo']
