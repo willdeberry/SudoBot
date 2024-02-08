@@ -105,6 +105,15 @@ def main():
         embed.description = response
         await ctx.followup.send(embed = embed)
 
+    @client.tree.command(description = 'Ask the bot a coding question')
+    async def code(ctx, question: str):
+        await ctx.response.defer()
+        ollama = Ollama()
+        response = await ollama.code(question)
+        embed = discord.Embed(title = f'Question: {question}', type = 'rich')
+        embed.description = response
+        await ctx.followup.send(embed = embed)
+
     client.tree.add_command(TBLCommands(), guild = client.guild_id)
     client.run(os.environ.get('BOT_TOKEN'))
 
