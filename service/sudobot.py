@@ -7,6 +7,7 @@ from socket import gethostbyname
 
 from utilities.helpers import build_embed
 from utilities.logger import logger
+from commands.ollama import Ollama
 from commands.status import Status
 from commands.tbl import TBLCommands
 from sports.updates import HockeyUpdates
@@ -35,7 +36,11 @@ class SudoBot(discord.Client):
         hockey_updates.check_score.start()
 
     async def on_message(self, message):
-        logger.info(f'Received message in {message.channel.name} from {message.author}: {message.content}')
+        try:
+            logger.info(f'Received message in {message.channel.name} from {message.author}: {message.content}')
+        except:
+            pass
+
         read_only_channels = ['downloads', 'plex', 'server-status']
 
         if message.author == self.user:
@@ -90,6 +95,15 @@ def main():
         current_status = status.get_current()
         embed = build_embed('Current server statuses', current_status)
         await ctx.response.send_message(embed = embed)
+
+    @client.tree.command(description = 'Ask the bot a question')
+    async def ask(ctx, question: str):
+        await ctx.response.defer()
+        ollama = Ollama()
+        response = await ollama.ask(question)
+        embed = discord.Embed(title = f'Question: {question}', type = 'rich')
+        embed.description = response
+        await ctx.followup.send(embed = embed)
 
     client.tree.add_command(TBLCommands(), guild = client.guild_id)
     client.run(os.environ.get('BOT_TOKEN'))
