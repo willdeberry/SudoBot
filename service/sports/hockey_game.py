@@ -41,7 +41,7 @@ class HockeyGame:
             if game_date_datetime != today:
                 continue
 
-            if game_state != 'FUT':
+            if game_state not in ['FUT','LIVE']:
                 continue
 
             self.db.set('status', 'scheduled')
