@@ -41,7 +41,7 @@ class HockeyGame:
             if game_date_datetime != today:
                 continue
 
-            if game_state not in ['FUT','LIVE']:
+            if game_state not in ['FUT','PRE','LIVE']:
                 continue
 
             self.db.set('status', 'scheduled')
@@ -92,7 +92,8 @@ class HockeyGame:
         try:
             total_goals = boxscore['boxscore']['linescore']['totals']
         except KeyError:
-            return
+            self._fetch_boxscore(game_id)
+            total_goals = boxscore['boxscore']['linescore']['totals']
 
         home_goals = total_goals['home']
         away_goals = total_goals['away']
@@ -100,8 +101,15 @@ class HockeyGame:
         if home_goals != cur_home_goals or away_goals != cur_away_goals:
             self.db.set('home_goals', home_goals)
             self.db.set('away_goals', away_goals)
-            self.db.set('time_scored', boxscore['clock']['timeRemaining'])
-            self.db.set('period_scored', boxscore['period'])
+
+            try:
+                self.db.set('time_scored', boxscore['clock']['timeRemaining'])
+                self.db.set('period_scored', boxscore['period'])
+            except KeyError:
+                self._fetch_boxscore(game_id)
+                self.db.set('time_scored', boxscore['clock']['timeRemaining'])
+                self.db.set('period_scored', boxscore['period'])
+
             self.db.set('status', 'goal')
 
     def intermission(self):
@@ -167,11 +175,14 @@ class HockeyGame:
         schedule_game = json.loads(self.db.get('schedule_game'))
         game_id = schedule_game['id']
 
-        self._fetch_boxscore(game_id)
-
         boxscore = json.loads(self.db.get('boxscore'))
         records = self._get_records(boxscore['homeTeam']['abbrev'], boxscore['awayTeam']['abbrev'])
-        game_info = boxscore['boxscore']['gameInfo']
+
+        try:
+            game_info = boxscore['boxscore']['gameInfo']
+        except KeyError:
+            return {}
+
         home_scratches = game_info['homeTeam']['scratches']
         away_scratches = game_info['awayTeam']['scratches']
 

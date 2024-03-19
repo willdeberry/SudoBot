@@ -20,7 +20,12 @@ class HockeyUpdates:
 
     @tasks.loop(seconds = 15)
     async def check_score(self):
-        game = self.hockey_game.poll()
+        try:
+            game = self.hockey_game.poll()
+        except:
+            game = None
+
+        logger.info(f'status: {game}')
 
         match game:
             case 'scheduled':
@@ -132,6 +137,10 @@ class HockeyUpdates:
         logger.info('reporting game start')
 
         data = self.hockey_game.get_start_data()
+
+        if not data:
+            return
+
         home_record = data['home']['record']
         home_scratches = ', '.join(data['home']['scratches'])
         away_record = data['away']['record']
