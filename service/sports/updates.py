@@ -125,7 +125,7 @@ class HockeyUpdates:
                 {'name': 'Date', 'value': f"{data['time']} @ {data['venue']}"},
                 {'name': 'Matchup', 'value': f"{away_name} ({away_record}) vs {home_name} ({home_record})"},
                 {'name': 'Broadcasts', 'value': tv_channels, 'inline': True},
-                {'name': 'Streams', 'value': '[CastStreams](https://www.caststreams.com/), [CrackStreams](http://crackstreams.biz/nhlstreams/)', 'inline': True}
+                {'name': 'Streams', 'value': '[CrackStreams](http://crackstreams.biz/nhlstreams/)', 'inline': True}
             ]
 
         embed = build_embed(f'{goal_emoji} Today is Gameday! {goal_emoji}', fields)
