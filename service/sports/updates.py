@@ -26,8 +26,8 @@ class HockeyUpdates:
     async def check_score(self):
         try:
             game = self.hockey_game.poll()
-        except Exception as e:
-            logging.error(f'error: {e}')
+        except Exception:
+            logging.error(f'error: {traceback.format_exc()}')
             game = None
 
         logging.info(f'status: {game}')
