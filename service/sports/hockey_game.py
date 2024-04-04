@@ -90,10 +90,10 @@ class HockeyGame:
             cur_away_goals = int(self.db.get('away_goals'))
 
         try:
-            total_goals = boxscore['boxscore']['linescore']['totals']
+            total_goals = boxscore['summary']['linescore']['totals']
         except KeyError:
             self._fetch_boxscore(game_id)
-            total_goals = boxscore['boxscore']['linescore']['totals']
+            total_goals = boxscore['summary']['linescore']['totals']
 
         home_goals = total_goals['home']
         away_goals = total_goals['away']
@@ -104,11 +104,13 @@ class HockeyGame:
 
             try:
                 self.db.set('time_scored', boxscore['clock']['timeRemaining'])
-                self.db.set('period_scored', boxscore['period'])
+                self.db.set('period_scored', boxscore['periodDescriptor']['number'])
             except KeyError:
                 self._fetch_boxscore(game_id)
+            finally:
+                boxscore = json.loads(self.db.get('boxscore'))
                 self.db.set('time_scored', boxscore['clock']['timeRemaining'])
-                self.db.set('period_scored', boxscore['period'])
+                self.db.set('period_scored', boxscore['periodDescriptor']['number'])
 
             self.db.set('status', 'goal')
 
@@ -144,7 +146,6 @@ class HockeyGame:
         if game_state in ['FINAL']:
             self.db.delete('home_goals')
             self.db.delete('away_goals')
-            self.db.delete('schedule_game')
             self.db.set('status', 'end')
 
     def get_scheduled_data(self):
@@ -179,15 +180,19 @@ class HockeyGame:
         records = self._get_records(boxscore['homeTeam']['abbrev'], boxscore['awayTeam']['abbrev'])
 
         try:
-            game_info = boxscore['boxscore']['gameInfo']
+            game_info = boxscore['summary']['gameInfo']
+            data['home']['name'] = boxscore['homeTeam']['abbrev']
+            data['away']['name'] = boxscore['awayTeam']['abbrev']
         except KeyError:
-            return {}
+            self._fetch_boxscore(game_id)
+        finally:
+            game_info = boxscore['summary']['gameInfo']
+            data['home']['name'] = boxscore['homeTeam']['abbrev']
+            data['away']['name'] = boxscore['awayTeam']['abbrev']
 
         home_scratches = game_info['homeTeam']['scratches']
         away_scratches = game_info['awayTeam']['scratches']
 
-        data['home']['name'] = boxscore['homeTeam']['abbrev']
-        data['away']['name'] = boxscore['awayTeam']['abbrev']
         data['home']['record'] = records['home']
         data['away']['record'] = records['away']
         data['home']['scratches'] = [player['lastName']['default'] for player in home_scratches]
@@ -200,10 +205,20 @@ class HockeyGame:
         data['home'] = {}
         data['away'] = {}
 
+        schedule_game = json.loads(self.db.get('schedule_game'))
+        game_id = schedule_game['id']
         boxscore = json.loads(self.db.get('boxscore'))
 
-        data['home']['name'] = boxscore['homeTeam']['abbrev']
-        data['away']['name'] = boxscore['awayTeam']['abbrev']
+        try:
+            data['home']['name'] = boxscore['homeTeam']['abbrev']
+            data['away']['name'] = boxscore['awayTeam']['abbrev']
+        except KeyError:
+            self._fetch_boxscore(game_id)
+        finally:
+            boxscore = json.loads(self.db.get('boxscore'))
+            data['home']['name'] = boxscore['homeTeam']['abbrev']
+            data['away']['name'] = boxscore['awayTeam']['abbrev']
+
         data['home']['score'] = self.db.get('home_goals')
         data['away']['score'] = self.db.get('away_goals')
         data['time_left'] = self.db.get('time_scored')
@@ -216,12 +231,23 @@ class HockeyGame:
         data['home'] = {}
         data['away'] = {}
 
+        schedule_game = json.loads(self.db.get('schedule_game'))
+        game_id = schedule_game['id']
         boxscore = json.loads(self.db.get('boxscore'))
-        home_stats = boxscore['homeTeam']
-        away_stats = boxscore['awayTeam']
-        period = boxscore['period']
 
-        if boxscore['period'] > 3:
+        try:
+            home_stats = boxscore['homeTeam']
+            away_stats = boxscore['awayTeam']
+            period = boxscore['periodDescriptor']['number']
+        except KeyError:
+            self._fetch_boxscore(game_id)
+        finally:
+            boxscore = json.loads(self.db.get('boxscore'))
+            home_stats = boxscore['homeTeam']
+            away_stats = boxscore['awayTeam']
+            period = boxscore['periodDescriptor']['number']
+
+        if boxscore['periodDescriptor']['number'] > 3:
             period = 'OT'
 
         data['home']['name'] = home_stats['abbrev']
@@ -239,9 +265,19 @@ class HockeyGame:
         data['home'] = {}
         data['away'] = {}
 
+        schedule_game = json.loads(self.db.get('schedule_game'))
+        game_id = schedule_game['id']
         boxscore = json.loads(self.db.get('boxscore'))
-        home_stats = boxscore['homeTeam']
-        away_stats = boxscore['awayTeam']
+
+        try:
+            home_stats = boxscore['homeTeam']
+            away_stats = boxscore['awayTeam']
+        except KeyError:
+            self._fetch_boxscore(game_id)
+        finally:
+            boxscore = json.loads(self.db.get('boxscore'))
+            home_stats = boxscore['homeTeam']
+            away_stats = boxscore['awayTeam']
 
         data['home']['name'] = home_stats['abbrev']
         data['home']['score'] = home_stats['score']
