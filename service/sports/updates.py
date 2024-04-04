@@ -1,12 +1,16 @@
 
 import discord
 from discord.ext import tasks
+import logging
 import json
 import redis
 
 from sports.hockey_game import HockeyGame
 from utilities.helpers import build_embed
-from utilities.logger import logger
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 class HockeyUpdates:
@@ -22,10 +26,11 @@ class HockeyUpdates:
     async def check_score(self):
         try:
             game = self.hockey_game.poll()
-        except:
+        except Exception as e:
+            logging.error(f'error: {e}')
             game = None
 
-        logger.info(f'status: {game}')
+        logging.info(f'status: {game}')
 
         match game:
             case 'scheduled':
@@ -56,7 +61,7 @@ class HockeyUpdates:
             self._update_reporting_db('end')
             return
 
-        logger.info('reporting end of game')
+        logging.info('reporting end of game')
 
         data = self.hockey_game.get_game_end_data()
         home = data['home']
@@ -106,7 +111,7 @@ class HockeyUpdates:
             self._update_reporting_db('scheduled')
             return
 
-        logger.info('reporting game scheduled')
+        logging.info('reporting game scheduled')
 
         data = self.hockey_game.get_scheduled_data()
         home_name = data['home']['name']
@@ -134,7 +139,7 @@ class HockeyUpdates:
             self._update_reporting_db('start')
             return
 
-        logger.info('reporting game start')
+        logging.info('reporting game start')
 
         data = self.hockey_game.get_start_data()
 
@@ -161,7 +166,7 @@ class HockeyUpdates:
             self._update_reporting_db('intermission')
             return
 
-        logger.info('reporting intermission')
+        logging.info('reporting intermission')
 
         data = self.hockey_game.get_intermission_data()
         period = data['period']

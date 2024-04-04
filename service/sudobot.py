@@ -2,17 +2,20 @@
 
 import discord
 from dotenv import load_dotenv
+import logging
 import os
 from socket import gethostbyname
 
 from utilities.helpers import build_embed
-from utilities.logger import logger
 from commands.ollama import Ollama
 from commands.status import Status
 from commands.tbl import TBLCommands
 from sports.updates import HockeyUpdates
 
 
+logger = logging.getLogger('HockeyUpdates')
+ConsoleOutputHandler = logging.StreamHandler()
+logger.addHandler(ConsoleOutputHandler)
 load_dotenv()
 
 
@@ -28,7 +31,7 @@ class SudoBot(discord.Client):
         await self.tree.sync(guild = self.guild_id)
 
     async def on_ready(self):
-        logger.info(f'Bot logged in as {self.user}')
+        logging.info(f'Bot logged in as {self.user}')
         general_channel = await self.fetch_channel(os.environ.get('GENERAL_CHANNEL'))
         sports_channel = await self.fetch_channel(os.environ.get('SPORTS_CHANNEL'))
         guild = self.get_guild(int(os.environ.get('GUILD_ID')))
@@ -37,7 +40,7 @@ class SudoBot(discord.Client):
 
     async def on_message(self, message):
         try:
-            logger.info(f'Received message in {message.channel.name} from {message.author}: {message.content}')
+            logging.info(f'Received message in {message.channel.name} from {message.author}: {message.content}')
         except:
             pass
 
@@ -63,7 +66,7 @@ class SudoBot(discord.Client):
         if str(message.author) in allowed_posters:
             return
 
-        logger.info(f'removing message from read only room posted by {message.author}')
+        logging.info(f'removing message from read only room posted by {message.author}')
         await message.delete()
 
 
