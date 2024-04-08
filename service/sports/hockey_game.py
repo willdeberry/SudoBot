@@ -290,6 +290,8 @@ class HockeyGame:
             data['home'][category] = stat['homeValue']
             data['away'][category] = stat['awayValue']
 
+        self.db.delete('schedule_game')
+
         return data
 
     def _fetch_schedule(self):
