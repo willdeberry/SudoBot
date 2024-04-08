@@ -272,6 +272,7 @@ class HockeyGame:
         try:
             home_stats = boxscore['homeTeam']
             away_stats = boxscore['awayTeam']
+            summary = boxscore['summary']
         except KeyError:
             self._fetch_boxscore(game_id)
         finally:
@@ -281,16 +282,13 @@ class HockeyGame:
 
         data['home']['name'] = home_stats['abbrev']
         data['home']['score'] = home_stats['score']
-        data['home']['sog'] = home_stats['sog']
-        data['home']['fopercent'] = home_stats['faceoffWinningPctg']
-        data['home']['ppconversion'] = home_stats['powerPlayConversion']
-        data['home']['hits'] = home_stats['hits']
         data['away']['name'] = away_stats['abbrev']
         data['away']['score'] = away_stats['score']
-        data['away']['sog'] = away_stats['sog']
-        data['away']['fopercent'] = away_stats['faceoffWinningPctg']
-        data['away']['ppconversion'] = away_stats['powerPlayConversion']
-        data['away']['hits'] = away_stats['hits']
+
+        for stat in summary['teamGameStats']:
+            category = stat['category']
+            data['home'][category] = stat['homeValue']
+            data['away'][category] = stat['awayValue']
 
         return data
 
