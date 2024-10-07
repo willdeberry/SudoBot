@@ -27,6 +27,7 @@ class HockeyUpdates:
         try:
             game = self.hockey_game.poll()
         except Exception:
+            import traceback
             logging.error(f'error: {traceback.format_exc()}')
             game = None
 
