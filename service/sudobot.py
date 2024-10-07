@@ -7,6 +7,7 @@ import os
 from socket import gethostbyname
 
 from utilities.helpers import build_embed
+from commands.downloads import DownloadCommands
 from commands.ollama import Ollama
 from commands.status import Status
 from commands.tbl import TBLCommands
@@ -117,6 +118,7 @@ def main():
         embed.description = response
         await ctx.followup.send(embed = embed)
 
+    client.tree.add_command(DownloadCommands(), guild = client.guild_id)
     client.tree.add_command(TBLCommands(), guild = client.guild_id)
     client.run(os.environ.get('BOT_TOKEN'))
 
