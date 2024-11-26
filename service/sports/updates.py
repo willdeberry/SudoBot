@@ -186,10 +186,18 @@ class HockeyUpdates:
         away_name = data['away']['name']
         away_score = data['away']['score']
         away_sog = data['away']['sog']
+        goals = data['goals']
+        formatted_goals = []
+        num = 1
+
+        for goal in goals:
+            formatted_goals.append(f'{num}: {goal}')
+            num += 1
 
         fields = [
                 {'name': home_name, 'value': f'{home_score} ({home_sog} sog)'},
-                {'name': away_name, 'value': f'{away_score} ({away_sog} sog)'}
+                {'name': away_name, 'value': f'{away_score} ({away_sog} sog)'},
+                {'name': 'Goal Recaps', 'value': '\n'.join(formatted_goals)}
             ]
         embed = build_embed(f'End of {period} period', fields)
 

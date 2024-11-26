@@ -126,6 +126,7 @@ class HockeyGame:
             return
 
         self._fetch_boxscore(game_id)
+        self._fetch_game_story(game_id)
         boxscore = json.loads(self.db.get('boxscore'))
         game_state = boxscore['gameState']
 
@@ -240,18 +241,22 @@ class HockeyGame:
         schedule_game = json.loads(self.db.get('schedule_game'))
         game_id = schedule_game['id']
         boxscore = json.loads(self.db.get('boxscore'))
+        story = json.loads(self.db.get('story'))
 
         try:
             home_stats = boxscore['homeTeam']
             away_stats = boxscore['awayTeam']
             period = boxscore['periodDescriptor']['number']
+            goals = story['summary']['scoring'][0]['goals']
         except KeyError:
             self._fetch_boxscore(game_id)
+            self._fetch_game_story(game_id)
         finally:
             boxscore = json.loads(self.db.get('boxscore'))
             home_stats = boxscore['homeTeam']
             away_stats = boxscore['awayTeam']
             period = boxscore['periodDescriptor']['number']
+            goals = story['summary']['scoring'][0]['goals']
 
         if boxscore['periodDescriptor']['number'] > 3:
             period = 'OT'
@@ -263,6 +268,7 @@ class HockeyGame:
         data['away']['score'] = away_stats['score']
         data['away']['sog'] = away_stats['sog']
         data['period'] = period
+        data['goals'] = [goal['highlightClipSharingUrl'] for goal in goals]
 
         return data
 
@@ -334,6 +340,14 @@ class HockeyGame:
             return
 
         self.db.set('start_data', json.dumps(data))
+
+    def _fetch_game_story(self, game_id):
+        try:
+            story = self.client.game_center.game_story(game_id = game_id)
+        except:
+            return
+
+        self.db.set('story', json.dumps(story))
 
     def _get_records(self, home_name, away_name):
         data = {}
