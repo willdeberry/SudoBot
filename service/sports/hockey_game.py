@@ -279,23 +279,28 @@ class HockeyGame:
 
         schedule_game = json.loads(self.db.get('schedule_game'))
         game_id = schedule_game['id']
-        boxscore = json.loads(self.db.get('boxscore'))
+        story = json.loads(self.db.get('story'))
 
         try:
-            home_stats = boxscore['homeTeam']
-            away_stats = boxscore['awayTeam']
-            summary = boxscore['summary']
+            home_stats = story['homeTeam']
+            away_stats = story['awayTeam']
+            summary = story['summary']
+            goals = story['summary']['scoring'][0]['goals']
         except KeyError:
             self._fetch_boxscore(game_id)
+            self._fetch_game_story(game_id)
         finally:
-            boxscore = json.loads(self.db.get('boxscore'))
-            home_stats = boxscore['homeTeam']
-            away_stats = boxscore['awayTeam']
+            story = json.loads(self.db.get('story'))
+            home_stats = story['homeTeam']
+            away_stats = story['awayTeam']
+            summary = story['summary']
+            goals = story['summary']['scoring'][0]['goals']
 
         data['home']['name'] = home_stats['abbrev']
         data['home']['score'] = home_stats['score']
         data['away']['name'] = away_stats['abbrev']
         data['away']['score'] = away_stats['score']
+        data['goals'] = [goal['highlightClipSharingUrl'] for goal in goals]
 
         for stat in summary['teamGameStats']:
             category = stat['category']

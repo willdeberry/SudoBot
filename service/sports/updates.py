@@ -58,7 +58,7 @@ class HockeyUpdates:
 
     async def _report_end(self):
         # If the value is 1 (True), then we don't need to report the game ended again.
-        if self._db.exist('report_game_end') and int(self._db.get('report_game_end')) == 1:
+        if self._db.exists('report_game_end') and int(self._db.get('report_game_end')) == 1:
             self._update_reporting_db('end')
             return
 
@@ -86,6 +86,13 @@ class HockeyUpdates:
         away_blocked = away['blockedShots']
         away_give = away['giveaways']
         away_take = away['takeaways']
+        goals = data['goals']
+        formatted_goals = []
+        num = 1
+
+        for goal in goals:
+            formatted_goals.append(f'{num}: {goal}')
+            num += 1
 
         fields = [
                 {'name': 'Score', 'value': f'{home_name}: {home_score} - {away_score} :{away_name}'},
@@ -95,7 +102,8 @@ class HockeyUpdates:
                 {'name': 'Hits', 'value': f'{home_name}: {home_hits} - {away_hits} :{away_name}', 'inline': True},
                 {'name': 'Blocked Shots', 'value': f'{home_name}: {home_blocked} - {away_blocked} :{away_name}', 'inline': True},
                 {'name': 'Giveaways', 'value': f'{home_name}: {home_give} - {away_give} :{away_name}', 'inline': True},
-                {'name': 'Takeaways', 'value': f'{home_name}: {home_take} - {away_take} :{away_name}', 'inline': True}
+                {'name': 'Takeaways', 'value': f'{home_name}: {home_take} - {away_take} :{away_name}', 'inline': True},
+                {'name': 'Goal Recaps', 'value': '\n'.join(formatted_goals)}
             ]
         embed = build_embed('Game End', fields)
 
