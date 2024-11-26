@@ -60,6 +60,7 @@ class HockeyGame:
             return
 
         self._fetch_boxscore(game_id)
+        self._fetch_start_data(game_id)
         self.db.set('status', 'start')
 
     def goal(self):
@@ -90,13 +91,13 @@ class HockeyGame:
             cur_away_goals = int(self.db.get('away_goals'))
 
         try:
-            total_goals = boxscore['summary']['linescore']['totals']
+            home_goals = boxscore['homeTeam']['score']
+            away_goals = boxscore['awayTeam']['score']
         except KeyError:
             self._fetch_boxscore(game_id)
-            total_goals = boxscore['summary']['linescore']['totals']
+            home_goals = boxscore['homeTeam']['score']
+            away_goals = boxscore['awayTeam']['score']
 
-        home_goals = total_goals['home']
-        away_goals = total_goals['away']
 
         if home_goals != cur_home_goals or away_goals != cur_away_goals:
             self.db.set('home_goals', home_goals)
@@ -176,22 +177,27 @@ class HockeyGame:
         schedule_game = json.loads(self.db.get('schedule_game'))
         game_id = schedule_game['id']
 
-        boxscore = json.loads(self.db.get('boxscore'))
-        records = self._get_records(boxscore['homeTeam']['abbrev'], boxscore['awayTeam']['abbrev'])
+        try:
+            start_data = json.loads(self.db.get('start_data'))
+        except TypeError:
+            self._fetch_start_data(game_id)
+        finally:
+            start_data = json.loads(self.db.get('start_data'))
 
         try:
-            game_info = boxscore['summary']['gameInfo']
-            data['home']['name'] = boxscore['homeTeam']['abbrev']
-            data['away']['name'] = boxscore['awayTeam']['abbrev']
+            home_team_abbrev = start_data['seasonSeries'][0]['homeTeam']['abbrev']
+            away_team_abbrev = start_data['seasonSeries'][0]['awayTeam']['abbrev']
         except KeyError:
-            self._fetch_boxscore(game_id)
+            self._fetch_start_data(game_id)
         finally:
-            game_info = boxscore['summary']['gameInfo']
-            data['home']['name'] = boxscore['homeTeam']['abbrev']
-            data['away']['name'] = boxscore['awayTeam']['abbrev']
+            home_team_abbrev = start_data['seasonSeries'][0]['homeTeam']['abbrev']
+            away_team_abbrev = start_data['seasonSeries'][0]['awayTeam']['abbrev']
 
-        home_scratches = game_info['homeTeam']['scratches']
-        away_scratches = game_info['awayTeam']['scratches']
+        records = self._get_records(home_team_abbrev, away_team_abbrev)
+        data['home']['name'] = home_team_abbrev
+        data['away']['name'] = away_team_abbrev
+        home_scratches = start_data['gameInfo']['homeTeam']['scratches']
+        away_scratches = start_data['gameInfo']['awayTeam']['scratches']
 
         data['home']['record'] = records['home']
         data['away']['record'] = records['away']
@@ -320,6 +326,14 @@ class HockeyGame:
             return
 
         self.db.set('boxscore', json.dumps(boxscore))
+
+    def _fetch_start_data(self, game_id):
+        try:
+            data = self.client.game_center.right_rail(game_id = game_id)
+        except:
+            return
+
+        self.db.set('start_data', json.dumps(data))
 
     def _get_records(self, home_name, away_name):
         data = {}

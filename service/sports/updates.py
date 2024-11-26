@@ -58,7 +58,7 @@ class HockeyUpdates:
 
     async def _report_end(self):
         # If the value is 1 (True), then we don't need to report the game ended again.
-        if int(self._db.get('report_game_end')) == 1:
+        if self._db.exist('report_game_end') and int(self._db.get('report_game_end')) == 1:
             self._update_reporting_db('end')
             return
 
@@ -117,7 +117,7 @@ class HockeyUpdates:
 
     async def _report_game_scheduled(self):
         # If the value is 1 (True), then we don't need to report the game scheduled again.
-        if int(self._db.get('report_game_scheduled')) == 1:
+        if self._db.exists('report_game_scheduled') and int(self._db.get('report_game_scheduled')) == 1:
             self._update_reporting_db('scheduled')
             return
 
@@ -145,7 +145,7 @@ class HockeyUpdates:
 
     async def _report_game_start(self):
         # If the value is 1 (True), then we don't need to report the game started again.
-        if int(self._db.get('report_game_start')) == 1:
+        if self._db.exists('report_game_start') and int(self._db.get('report_game_start')) == 1:
             self._update_reporting_db('start')
             return
 
@@ -172,7 +172,7 @@ class HockeyUpdates:
 
     async def _report_intermission(self):
         # If the value is 1 (True), then we don't need to report the game started again.
-        if int(self._db.get('report_game_intermission')) == 1:
+        if self._db.exists('report_game_intermission') and int(self._db.get('report_game_intermission')) == 1:
             self._update_reporting_db('intermission')
             return
 
